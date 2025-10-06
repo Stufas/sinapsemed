@@ -6,6 +6,26 @@ import { Link } from "react-router-dom";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="rounded-lg bg-gradient-primary p-2">
+              <Brain className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-xl font-bold">Sinapse Med</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild>
+              <Link to="/onboarding">Entrar</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/onboarding">Começar Grátis</Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-primary py-20 px-4">
         <div className="container mx-auto max-w-6xl">
