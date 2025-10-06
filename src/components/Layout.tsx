@@ -39,7 +39,7 @@ const Layout = ({ children }: LayoutProps) => {
               <div className="rounded-lg bg-gradient-primary p-2">
                 <Brain className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold">EstudaMais</span>
+              <span className="text-xl font-bold">Sinapse Med</span>
             </Link>
           </div>
 
