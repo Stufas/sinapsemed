@@ -175,7 +175,7 @@ const Onboarding = () => {
                       <div>
                         <p className="font-semibold">Médico Residente</p>
                         <p className="text-sm text-muted-foreground">
-                          Preparação para residência médica
+                          Preparação para concursos médicos
                         </p>
                       </div>
                     </div>
