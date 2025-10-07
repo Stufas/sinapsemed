@@ -40,7 +40,7 @@ const App = () => (
           <Route path="/questions" element={<Layout><ProtectedRoute><QuestionsPage /></ProtectedRoute></Layout>} />
           <Route path="/schedule" element={<Layout><SchedulePage /></Layout>} />
           <Route path="/content" element={<Layout><ProtectedRoute><ContentPage /></ProtectedRoute></Layout>} />
-          <Route path="/timer" element={<Layout><ProtectedRoute><TimerPage /></ProtectedRoute></Layout>} />
+          <Route path="/timer" element={<Layout><TimerPage /></Layout>} />
         <Route path="/chat" element={<Layout><ProtectedRoute><div className="text-center text-muted-foreground">Em breve...</div></ProtectedRoute></Layout>} />
         <Route path="/community" element={<Layout><ProtectedRoute><Community /></ProtectedRoute></Layout>} />
         <Route path="/settings" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />

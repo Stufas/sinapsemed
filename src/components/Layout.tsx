@@ -43,7 +43,7 @@ const Layout = ({ children }: LayoutProps) => {
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", premium: false },
     { to: "/calendar", icon: Calendar, label: "Calendário", premium: true },
     { to: "/schedule", icon: CalendarDays, label: "Cronograma", premium: false },
-    { to: "/timer", icon: Timer, label: "Cronômetro", premium: true },
+    { to: "/timer", icon: Timer, label: "Cronômetro", premium: false },
     { to: "/flashcards", icon: Brain, label: "Flashcards", premium: true },
     { to: "/practice", icon: Target, label: "Simulados", premium: true },
     { to: "/questions", icon: HelpCircle, label: "Questões", premium: true },
