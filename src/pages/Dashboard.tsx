@@ -7,7 +7,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="mb-2 text-3xl font-bold">Olá, Estudante! 👋</h1>
+        <h1 className="mb-2 text-3xl font-bold">Olá, Dr. 👋</h1>
         <p className="text-muted-foreground">Aqui está um resumo do seu progresso hoje</p>
       </div>
 
