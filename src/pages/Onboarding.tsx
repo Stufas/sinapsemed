@@ -391,12 +391,18 @@ const Onboarding = () => {
                       onChange={(e) => setCurrentExamDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
                     />
-                    <Input 
-                      placeholder="Matéria" 
+                    <select
+                      className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[150px]"
                       value={currentExamSubject}
                       onChange={(e) => setCurrentExamSubject(e.target.value)}
-                      className="min-w-[150px]"
-                    />
+                    >
+                      <option value="">Selecione a matéria</option>
+                      {data.subjects.map((subject) => (
+                        <option key={subject.id} value={subject.name}>
+                          {subject.name}
+                        </option>
+                      ))}
+                    </select>
                     <select
                       className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       value={currentExamType}
