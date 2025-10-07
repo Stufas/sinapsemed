@@ -242,10 +242,10 @@ const Onboarding = () => {
                 </div>
                 {data.profile !== "pre-med" && (
                   <div>
-                    <Label htmlFor="institution">Instituição *</Label>
+                    <Label htmlFor="institution">Especialidade *</Label>
                     <Input
                       id="institution"
-                      placeholder="Ex: Universidade Federal de São Paulo"
+                      placeholder="Ex: Cardiologia, Neurologia, Pediatria"
                       className="mt-2"
                       value={data.institution}
                       onChange={(e) => updateData("institution", e.target.value)}
