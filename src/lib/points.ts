@@ -20,6 +20,9 @@ export async function trackActivity(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Update streak
+    await supabase.rpc("update_user_streak", { p_user_id: user.id });
+
     // Get all groups user is a member of
     const { data: memberships } = await supabase
       .from("group_members")

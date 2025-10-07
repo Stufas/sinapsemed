@@ -1,9 +1,61 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, BookOpen, Brain, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { Calendar, BookOpen, Brain, TrendingUp, Clock, CheckCircle2, Flame } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface UserStreak {
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string;
+}
 
 const Dashboard = () => {
+  const [streak, setStreak] = useState<UserStreak | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStreak();
+  }, []);
+
+  const loadStreak = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: streakData } = await supabase
+        .from("user_streaks")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (streakData) {
+        setStreak(streakData);
+      } else {
+        // Initialize streak for new user
+        const { data: newStreak } = await supabase
+          .from("user_streaks")
+          .insert({
+            user_id: user.id,
+            current_streak: 1,
+            longest_streak: 1,
+            last_activity_date: new Date().toISOString().split('T')[0]
+          })
+          .select()
+          .single();
+
+        if (newStreak) {
+          setStreak(newStreak);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading streak:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getUserGreeting = () => {
     const userProfileStr = localStorage.getItem("userProfile");
     if (!userProfileStr) {
@@ -30,9 +82,30 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="mb-2 text-3xl font-bold">{getUserGreeting()}</h1>
-        <p className="text-muted-foreground">Aqui está um resumo do seu progresso hoje</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">{getUserGreeting()}</h1>
+          <p className="text-muted-foreground">Aqui está um resumo do seu progresso hoje</p>
+        </div>
+
+        {!loading && streak && (
+          <Card className="p-4 shadow-card">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-gradient-primary p-3">
+                <Flame className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{streak.current_streak}</p>
+                <p className="text-xs text-muted-foreground">dias de streak 🔥</p>
+              </div>
+            </div>
+            {streak.longest_streak > streak.current_streak && (
+              <p className="mt-2 text-xs text-muted-foreground border-t pt-2">
+                Melhor: {streak.longest_streak} dias
+              </p>
+            )}
+          </Card>
+        )}
       </div>
 
       {/* Stats Overview */}

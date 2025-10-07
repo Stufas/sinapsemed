@@ -165,6 +165,33 @@ export type Database = {
           },
         ]
       }
+      user_streaks: {
+        Row: {
+          current_streak: number
+          id: string
+          last_activity_date: string
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          id?: string
+          last_activity_date?: string
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          id?: string
+          last_activity_date?: string
+          longest_streak?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -173,6 +200,10 @@ export type Database = {
       generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      update_user_streak: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
