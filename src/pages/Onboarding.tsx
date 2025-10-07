@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Stethoscope, Briefcase, ArrowRight, X, Calendar as CalendarIcon } from "lucide-react";
+import { GraduationCap, Stethoscope, Briefcase, ArrowRight, X, Calendar as CalendarIcon, Target } from "lucide-react";
 import { toast } from "sonner";
 
 interface Subject {
@@ -146,13 +146,31 @@ const Onboarding = () => {
               <RadioGroup value={data.profile} onValueChange={(value) => updateData("profile", value)}>
                 <div className="space-y-3">
                   <Label
+                    htmlFor="pre-med"
+                    className="flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-colors hover:bg-muted [&:has(:checked)]:border-primary"
+                  >
+                    <RadioGroupItem value="pre-med" id="pre-med" />
+                    <div className="flex flex-1 items-center gap-3">
+                      <div className="rounded-full bg-primary/10 p-3">
+                        <Target className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">Pré-med</p>
+                        <p className="text-sm text-muted-foreground">
+                          Para você que está estudando para faculdade de medicina
+                        </p>
+                      </div>
+                    </div>
+                  </Label>
+
+                  <Label
                     htmlFor="university"
                     className="flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-colors hover:bg-muted [&:has(:checked)]:border-primary"
                   >
                     <RadioGroupItem value="university" id="university" />
                     <div className="flex flex-1 items-center gap-3">
-                      <div className="rounded-full bg-primary/10 p-3">
-                        <GraduationCap className="h-6 w-6 text-primary" />
+                      <div className="rounded-full bg-secondary/10 p-3">
+                        <GraduationCap className="h-6 w-6 text-secondary" />
                       </div>
                       <div>
                         <p className="font-semibold">Universitário</p>
@@ -169,8 +187,8 @@ const Onboarding = () => {
                   >
                     <RadioGroupItem value="residency" id="residency" />
                     <div className="flex flex-1 items-center gap-3">
-                      <div className="rounded-full bg-secondary/10 p-3">
-                        <Stethoscope className="h-6 w-6 text-secondary" />
+                      <div className="rounded-full bg-accent/10 p-3">
+                        <Stethoscope className="h-6 w-6 text-accent" />
                       </div>
                       <div>
                         <p className="font-semibold">Médico Residente</p>
@@ -187,8 +205,8 @@ const Onboarding = () => {
                   >
                     <RadioGroupItem value="public-service" id="public-service" />
                     <div className="flex flex-1 items-center gap-3">
-                      <div className="rounded-full bg-accent/10 p-3">
-                        <Briefcase className="h-6 w-6 text-accent" />
+                      <div className="rounded-full bg-muted/50 p-3">
+                        <Briefcase className="h-6 w-6 text-foreground" />
                       </div>
                       <div>
                         <p className="font-semibold">Concurseiro</p>
