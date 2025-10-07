@@ -33,11 +33,11 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signUp, signIn, user, onboardingCompleted } = useAuth();
+  const { signUp, signIn, user } = useAuth();
 
   // Redirect if already logged in
-  if (user && onboardingCompleted !== null) {
-    navigate(onboardingCompleted ? "/dashboard" : "/onboarding");
+  if (user) {
+    navigate("/dashboard");
     return null;
   }
 
@@ -94,8 +94,8 @@ const Auth = () => {
         return;
       }
 
-      // Login successful - will be redirected by the useEffect in Auth component
       toast.success("Login realizado com sucesso!");
+      navigate("/dashboard");
     } catch (error) {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => {
