@@ -109,26 +109,26 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="flex justify-center mb-6">
-            <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-4 shadow-lg">
-              <Brain className="h-10 w-10 text-primary-foreground" />
+        <div className="text-center mb-6 sm:mb-8 animate-fade-in">
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-3 sm:p-4 shadow-lg">
+              <Brain className="h-8 w-8 sm:h-10 sm:w-10 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
             {isSignUp ? "Criar Conta" : "Bem-vindo"}
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-base sm:text-lg">
             {isSignUp
               ? "Comece sua jornada de estudos hoje"
               : "Entre para continuar seus estudos"}
           </p>
         </div>
 
-        <Card className="p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 animate-fade-in">
-          <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-5">
+        <Card className="p-6 sm:p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 animate-fade-in">
+          <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground font-medium">
                 Email

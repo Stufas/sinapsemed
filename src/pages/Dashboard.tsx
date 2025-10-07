@@ -82,15 +82,15 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="mb-2 text-3xl font-bold">{getUserGreeting()}</h1>
-          <p className="text-muted-foreground">Aqui está um resumo do seu progresso hoje</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="mb-2 text-2xl sm:text-3xl font-bold">{getUserGreeting()}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Aqui está um resumo do seu progresso hoje</p>
         </div>
 
         {!loading && streak && (
-          <Card className="p-4 shadow-card">
+          <Card className="p-4 shadow-card w-full sm:w-auto">
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-gradient-primary p-3">
                 <Flame className="h-6 w-6 text-white" />
@@ -110,55 +110,55 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-6 shadow-card">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card className="p-4 sm:p-6 shadow-card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Horas Estudadas</p>
-              <p className="text-2xl font-bold">4.5h</p>
-              <p className="text-xs text-success">+12% esta semana</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Horas Estudadas</p>
+              <p className="text-xl sm:text-2xl font-bold">4.5h</p>
+              <p className="text-xs text-success">+12%</p>
             </div>
-            <div className="rounded-full bg-primary/10 p-3">
-              <Clock className="h-6 w-6 text-primary" />
+            <div className="rounded-full bg-primary/10 p-2 sm:p-3 flex-shrink-0">
+              <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 shadow-card">
+        <Card className="p-4 sm:p-6 shadow-card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Flashcards Revisados</p>
-              <p className="text-2xl font-bold">42</p>
-              <p className="text-xs text-muted-foreground">15 pendentes</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Flashcards</p>
+              <p className="text-xl sm:text-2xl font-bold">42</p>
+              <p className="text-xs text-muted-foreground">15 pend.</p>
             </div>
-            <div className="rounded-full bg-secondary/10 p-3">
-              <Brain className="h-6 w-6 text-secondary" />
+            <div className="rounded-full bg-secondary/10 p-2 sm:p-3 flex-shrink-0">
+              <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-secondary" />
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 shadow-card">
+        <Card className="p-4 sm:p-6 shadow-card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Questões Acertadas</p>
-              <p className="text-2xl font-bold">85%</p>
-              <p className="text-xs text-success">+5% desde ontem</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Acertos</p>
+              <p className="text-xl sm:text-2xl font-bold">85%</p>
+              <p className="text-xs text-success">+5%</p>
             </div>
-            <div className="rounded-full bg-accent/10 p-3">
-              <CheckCircle2 className="h-6 w-6 text-accent" />
+            <div className="rounded-full bg-accent/10 p-2 sm:p-3 flex-shrink-0">
+              <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 shadow-card">
+        <Card className="p-4 sm:p-6 shadow-card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Próxima Prova</p>
-              <p className="text-2xl font-bold">12 dias</p>
-              <p className="text-xs text-warning">Anatomia I</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Próx. Prova</p>
+              <p className="text-xl sm:text-2xl font-bold">12 dias</p>
+              <p className="text-xs text-warning truncate">Anatomia I</p>
             </div>
-            <div className="rounded-full bg-warning/10 p-3">
-              <Calendar className="h-6 w-6 text-warning" />
+            <div className="rounded-full bg-warning/10 p-2 sm:p-3 flex-shrink-0">
+              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-warning" />
             </div>
           </div>
         </Card>
@@ -169,18 +169,21 @@ const Dashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="progress" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="progress">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Progresso
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="progress" className="text-xs sm:text-sm">
+            <TrendingUp className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Progresso</span>
+            <span className="sm:hidden">Prog.</span>
           </TabsTrigger>
-          <TabsTrigger value="schedule">
-            <Calendar className="mr-2 h-4 w-4" />
-            Cronograma
+          <TabsTrigger value="schedule" className="text-xs sm:text-sm">
+            <Calendar className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Cronograma</span>
+            <span className="sm:hidden">Crono.</span>
           </TabsTrigger>
-          <TabsTrigger value="flashcards">
-            <Brain className="mr-2 h-4 w-4" />
-            Flashcards
+          <TabsTrigger value="flashcards" className="text-xs sm:text-sm">
+            <Brain className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Flashcards</span>
+            <span className="sm:hidden">Flash.</span>
           </TabsTrigger>
         </TabsList>
 
