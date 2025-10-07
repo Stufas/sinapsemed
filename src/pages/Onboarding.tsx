@@ -25,6 +25,8 @@ interface Exam {
 interface OnboardingData {
   profile: string;
   name: string;
+  gender: string;
+  pronoun: string;
   institution: string;
   course: string;
   semester: string;
@@ -39,6 +41,8 @@ const Onboarding = () => {
   const [data, setData] = useState<OnboardingData>({
     profile: "",
     name: "",
+    gender: "",
+    pronoun: "",
     institution: "",
     course: "",
     semester: "",
@@ -103,12 +107,13 @@ const Onboarding = () => {
   };
 
   const canProceedStep1 = data.profile !== "";
-  const canProceedStep2 = data.name.trim() && data.institution.trim() && data.course.trim();
+  const canProceedStep2 = data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim();
   const canProceedStep3 = data.subjects.length > 0;
   const canComplete = data.exams.length > 0 && data.studyHours;
 
   const handleComplete = () => {
     console.log("Onboarding data:", data);
+    localStorage.setItem("userProfile", JSON.stringify(data));
     toast.success("Perfil criado com sucesso!");
     navigate("/dashboard");
   };
@@ -251,6 +256,30 @@ const Onboarding = () => {
                     className="mt-2"
                     value={data.course}
                     onChange={(e) => updateData("course", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gender">Sexo *</Label>
+                  <select
+                    id="gender"
+                    className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={data.gender}
+                    onChange={(e) => updateData("gender", e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="feminino">Feminino</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="pronoun">Pronome preferido (opcional)</Label>
+                  <Input 
+                    id="pronoun" 
+                    placeholder="Ex: ele/dele, ela/dela, elu/delu" 
+                    className="mt-2"
+                    value={data.pronoun}
+                    onChange={(e) => updateData("pronoun", e.target.value)}
                   />
                 </div>
                 <div>

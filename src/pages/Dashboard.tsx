@@ -4,10 +4,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, BookOpen, Brain, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
 
 const Dashboard = () => {
+  const getUserGreeting = () => {
+    const userProfileStr = localStorage.getItem("userProfile");
+    if (!userProfileStr) {
+      return "Olá, Dr. 👋";
+    }
+    
+    try {
+      const userProfile = JSON.parse(userProfileStr);
+      const name = userProfile.name || "";
+      const gender = userProfile.gender || "";
+      
+      let title = "Dr.";
+      if (gender === "masculino") {
+        title = "Doutor";
+      } else if (gender === "feminino") {
+        title = "Doutora";
+      }
+      
+      return `Olá, ${title} ${name} 👋`;
+    } catch {
+      return "Olá, Dr. 👋";
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="mb-2 text-3xl font-bold">Olá, Dr. 👋</h1>
+        <h1 className="mb-2 text-3xl font-bold">{getUserGreeting()}</h1>
         <p className="text-muted-foreground">Aqui está um resumo do seu progresso hoje</p>
       </div>
 
