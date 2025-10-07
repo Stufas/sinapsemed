@@ -9,6 +9,7 @@ import CalendarPage from "./pages/CalendarPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import PracticePage from "./pages/PracticePage";
 import ContentPage from "./pages/ContentPage";
+import TimerPage from "./pages/TimerPage";
 import Demo from "./pages/Demo";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
@@ -26,9 +27,10 @@ const App = () => (
           <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/calendar" element={<Layout><CalendarPage /></Layout>} />
-        <Route path="/flashcards" element={<Layout><FlashcardsPage /></Layout>} />
-        <Route path="/practice" element={<Layout><PracticePage /></Layout>} />
-        <Route path="/content" element={<Layout><ContentPage /></Layout>} />
+          <Route path="/flashcards" element={<Layout><FlashcardsPage /></Layout>} />
+          <Route path="/practice" element={<Layout><PracticePage /></Layout>} />
+          <Route path="/content" element={<Layout><ContentPage /></Layout>} />
+          <Route path="/timer" element={<Layout><TimerPage /></Layout>} />
         <Route path="/chat" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
         <Route path="/community" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
         <Route path="/settings" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />

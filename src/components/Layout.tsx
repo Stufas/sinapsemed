@@ -6,7 +6,8 @@ import {
   Calendar, 
   Brain, 
   BookOpen, 
-  Target, 
+  Target,
+  Timer,
   MessageSquare, 
   Users,
   Settings
@@ -22,6 +23,7 @@ const Layout = ({ children }: LayoutProps) => {
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/calendar", icon: Calendar, label: "Calendário" },
+    { to: "/timer", icon: Timer, label: "Cronômetro" },
     { to: "/flashcards", icon: Brain, label: "Flashcards" },
     { to: "/practice", icon: Target, label: "Simulados" },
     { to: "/content", icon: BookOpen, label: "Conteúdo" },
