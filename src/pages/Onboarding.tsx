@@ -175,7 +175,7 @@ const Onboarding = () => {
                       <div>
                         <p className="font-semibold">Médico Residente</p>
                         <p className="text-sm text-muted-foreground">
-                          Preparação para concursos médicos
+                          Preparação para residência médica
                         </p>
                       </div>
                     </div>
@@ -193,7 +193,7 @@ const Onboarding = () => {
                       <div>
                         <p className="font-semibold">Concurseiro</p>
                         <p className="text-sm text-muted-foreground">
-                          Preparação para concursos públicos
+                          Preparação para concursos médicos
                         </p>
                       </div>
                     </div>
