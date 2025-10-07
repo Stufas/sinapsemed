@@ -103,14 +103,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      // Update profile with phone number
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ phone: phone })
-          .eq('id', data.user.id);
+      // Insert phone number into private data table (owner-only access)
+      if (data.user && phone) {
+        const { error: privateDataError } = await supabase
+          .from('user_private_data')
+          .insert({ 
+            id: data.user.id, 
+            phone: phone 
+          });
 
-        if (profileError) console.error('Error updating profile:', profileError);
+        if (privateDataError) console.error('Error saving private data:', privateDataError);
       }
 
       return { error: null };
