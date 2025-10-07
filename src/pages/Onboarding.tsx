@@ -108,8 +108,8 @@ const Onboarding = () => {
 
   const canProceedStep1 = data.profile !== "";
   const canProceedStep2 = data.profile === "pre-med" 
-    ? data.name.trim() && data.gender.trim() && data.course.trim() && (data.gender !== "outro" || data.pronoun.trim())
-    : data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim() && (data.gender !== "outro" || data.pronoun.trim());
+    ? data.name.trim() && data.gender.trim() && data.course.trim()
+    : data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim();
   const canProceedStep3 = data.subjects.length > 0;
   const canComplete = data.exams.length > 0 && data.studyHours;
 
@@ -284,7 +284,7 @@ const Onboarding = () => {
                 </div>
                 {data.gender === "outro" && (
                   <div>
-                    <Label htmlFor="pronoun">Pronome preferido *</Label>
+                    <Label htmlFor="pronoun">Pronome preferido (opcional)</Label>
                     <Input 
                       id="pronoun" 
                       placeholder="Ex: ele/dele, ela/dela, elu/delu" 
