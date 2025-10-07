@@ -49,9 +49,26 @@ const SchedulePage = () => {
   const [studyDays, setStudyDays] = useState([1, 2, 3, 4, 5]); // Mon-Fri by default
   const [examDate, setExamDate] = useState<Date>();
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [studyPreferences, setStudyPreferences] = useState<string[]>(["videoaulas"]);
   const [schedule, setSchedule] = useState<ScheduleEvent[]>([]);
   const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
+
+  const studyMethodOptions = [
+    { value: "videoaulas", label: "Videoaulas", icon: "🎥" },
+    { value: "leitura", label: "Leitura de resumos e apostilas", icon: "📖" },
+    { value: "mapas", label: "Mapas mentais", icon: "🗺️" },
+    { value: "exercicios", label: "Exercícios práticos", icon: "✍️" },
+    { value: "flashcards", label: "Flashcards", icon: "🎴" },
+  ];
+
+  const togglePreference = (value: string) => {
+    if (studyPreferences.includes(value)) {
+      setStudyPreferences(studyPreferences.filter(p => p !== value));
+    } else {
+      setStudyPreferences([...studyPreferences, value]);
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("studySubjects");
@@ -105,16 +122,23 @@ const SchedulePage = () => {
     setGenerating(true);
 
     try {
+      const preferenceLabels = studyPreferences.map(pref => {
+        const option = studyMethodOptions.find(o => o.value === pref);
+        return option ? option.label : pref;
+      });
+
       const prompt = `Você é um especialista em planejamento de estudos. Gere um cronograma de estudos semanal personalizado.
 
 Informações fornecidas:
 - Matérias: ${subjects.map(s => `${s.name} (prioridade: ${s.priority}, horas semanais desejadas: ${s.weeklyHours}h)`).join(", ")}
 - Horas disponíveis por dia: ${availableHours}h
 - Dias de estudo: ${studyDays.map(d => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d]).join(", ")}
+- Métodos de estudo preferidos: ${preferenceLabels.join(", ")}
 ${examDate ? `- Data da prova mais próxima: ${format(examDate, "dd/MM/yyyy")}` : ""}
 ${additionalInfo ? `- Informações adicionais: ${additionalInfo}` : ""}
 
 Gere um cronograma balanceado e realista, distribuindo as matérias ao longo da semana.
+IMPORTANTE: Na descrição de cada sessão de estudo, especifique qual método de estudo usar (videoaulas, leitura, mapas mentais, etc.) baseado nas preferências do usuário.
 
 IMPORTANTE: Retorne APENAS um array JSON válido no seguinte formato, sem texto adicional:
 [
@@ -371,6 +395,27 @@ Observações:
               </div>
 
               <div className="space-y-2">
+                <Label>Métodos de estudo preferidos</Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Selecione suas formas preferidas de estudo (selecione pelo menos uma)
+                </p>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {studyMethodOptions.map(option => (
+                    <Button
+                      key={option.value}
+                      type="button"
+                      variant={studyPreferences.includes(option.value) ? "default" : "outline"}
+                      className="justify-start h-auto py-3"
+                      onClick={() => togglePreference(option.value)}
+                    >
+                      <span className="text-xl mr-2">{option.icon}</span>
+                      <span className="text-left">{option.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Informações adicionais (opcional)</Label>
                 <Textarea
                   placeholder="Ex: Tenho dificuldade em matemática, prefiro estudar pela manhã..."
@@ -385,7 +430,7 @@ Observações:
             className="w-full"
             size="lg"
             onClick={generateSchedule}
-            disabled={generating || subjects.length === 0}
+            disabled={generating || subjects.length === 0 || studyPreferences.length === 0}
           >
             {generating ? (
               <>
