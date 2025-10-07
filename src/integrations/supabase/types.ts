@@ -204,6 +204,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      is_group_member_with: {
+        Args: { check_user_id: string; target_user_id: string }
+        Returns: boolean
+      }
       update_user_streak: {
         Args: { p_user_id: string }
         Returns: undefined
