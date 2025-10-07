@@ -25,7 +25,7 @@ const signInSchema = z.object({
 });
 
 const Auth = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -161,34 +161,6 @@ const Auth = () => {
         </div>
 
         <Card className="p-6 sm:p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 animate-fade-in">
-          {!isForgotPassword && (
-            <div className="flex gap-2 mb-6">
-              <Button
-                type="button"
-                variant={!isSignUp ? "default" : "outline"}
-                className="flex-1 h-11"
-                onClick={() => {
-                  setIsSignUp(false);
-                  setPassword("");
-                  setConfirmPassword("");
-                }}
-              >
-                Login
-              </Button>
-              <Button
-                type="button"
-                variant={isSignUp ? "default" : "outline"}
-                className="flex-1 h-11"
-                onClick={() => {
-                  setIsSignUp(true);
-                  setPassword("");
-                  setConfirmPassword("");
-                }}
-              >
-                Criar Conta
-              </Button>
-            </div>
-          )}
           <form 
             onSubmit={isForgotPassword ? handleForgotPassword : isSignUp ? handleSignUp : handleSignIn} 
             className="space-y-4 sm:space-y-5"
@@ -287,21 +259,27 @@ const Auth = () => {
             </Button>
           </form>
 
-          {isForgotPassword && (
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => {
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                if (isForgotPassword) {
                   setIsForgotPassword(false);
-                  setPassword("");
-                  setConfirmPassword("");
-                }}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
-              >
-                Voltar para login
-              </button>
-            </div>
-          )}
+                } else {
+                  setIsSignUp(!isSignUp);
+                }
+                setPassword("");
+                setConfirmPassword("");
+              }}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
+            >
+              {isForgotPassword
+                ? "Voltar para login"
+                : isSignUp
+                ? "Já tem uma conta? Faça login"
+                : "Não tem uma conta? Cadastre-se"}
+            </button>
+          </div>
         </Card>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
