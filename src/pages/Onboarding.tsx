@@ -198,24 +198,6 @@ const Onboarding = () => {
                       </div>
                     </div>
                   </Label>
-
-                  <Label
-                    htmlFor="public-service"
-                    className="flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-colors hover:bg-muted [&:has(:checked)]:border-primary"
-                  >
-                    <RadioGroupItem value="public-service" id="public-service" />
-                    <div className="flex flex-1 items-center gap-3">
-                      <div className="rounded-full bg-muted/50 p-3">
-                        <Briefcase className="h-6 w-6 text-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-semibold">Concurseiro</p>
-                        <p className="text-sm text-muted-foreground">
-                          Preparação para concursos médicos
-                        </p>
-                      </div>
-                    </div>
-                  </Label>
                 </div>
               </RadioGroup>
 
