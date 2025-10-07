@@ -253,10 +253,10 @@ const Onboarding = () => {
                   </div>
                 )}
                 <div>
-                  <Label htmlFor="course">Curso ou Área *</Label>
+                  <Label htmlFor="course">Faculdade dos Sonhos *</Label>
                   <Input 
                     id="course" 
-                    placeholder="Ex: Medicina" 
+                    placeholder="Ex: USP, UNIFESP, UFRJ" 
                     className="mt-2"
                     value={data.course}
                     onChange={(e) => updateData("course", e.target.value)}
