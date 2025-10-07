@@ -111,7 +111,6 @@ const Onboarding = () => {
     ? data.name.trim() && data.gender.trim() && data.course.trim()
     : data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim();
   const canProceedStep3 = data.subjects.length > 0;
-  const canComplete = data.exams.length > 0 && data.studyHours;
 
   const handleComplete = () => {
     console.log("Onboarding data:", data);
@@ -374,6 +373,14 @@ const Onboarding = () => {
                   Voltar
                 </Button>
                 <Button 
+                  onClick={handleComplete} 
+                  variant="outline"
+                  className="flex-1"
+                  disabled={!canProceedStep3}
+                >
+                  Adicionar Depois
+                </Button>
+                <Button 
                   onClick={() => setStep(4)} 
                   className="flex-1"
                   disabled={!canProceedStep3}
@@ -388,15 +395,15 @@ const Onboarding = () => {
           {step === 4 && (
             <div className="space-y-6">
               <div>
-                <h2 className="mb-2 text-2xl font-bold">Configurações finais</h2>
+                <h2 className="mb-2 text-2xl font-bold">Configurações finais (opcional)</h2>
                 <p className="text-muted-foreground">
-                  Adicione datas de avaliações e preferências de estudo
+                  Adicione datas de avaliações e preferências de estudo ou faça isso depois
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <Label className="mb-2 block font-semibold">Avaliações</Label>
+                  <Label className="mb-2 block font-semibold">Avaliações (opcional)</Label>
                   <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
                     <Input 
                       type="date" 
@@ -433,7 +440,7 @@ const Onboarding = () => {
                   
                   {data.exams.length === 0 ? (
                     <div className="mt-2 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                      Adicione pelo menos uma avaliação
+                      Nenhuma avaliação adicionada (você pode adicionar depois)
                     </div>
                   ) : (
                     <div className="mt-2 space-y-2">
@@ -470,7 +477,7 @@ const Onboarding = () => {
 
                 <div>
                   <Label htmlFor="studyHours" className="mb-2 block font-semibold">
-                    Horas disponíveis por dia *
+                    Horas disponíveis por dia (opcional)
                   </Label>
                   <Input 
                     id="studyHours"
@@ -507,7 +514,6 @@ const Onboarding = () => {
                 <Button 
                   onClick={handleComplete} 
                   className="flex-1"
-                  disabled={!canComplete}
                 >
                   Finalizar
                   <ArrowRight className="ml-2 h-5 w-5" />
