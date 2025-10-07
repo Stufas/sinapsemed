@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 import { GraduationCap, Stethoscope, Briefcase, ArrowRight, X, Calendar as CalendarIcon, Target } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Subject {
   id: string;
@@ -59,6 +60,7 @@ const Onboarding = () => {
   const [currentExamType, setCurrentExamType] = useState("Prova");
   
   const navigate = useNavigate();
+  const { completeOnboarding } = useAuth();
 
   const updateData = (field: keyof OnboardingData, value: any) => {
     setData(prev => ({ ...prev, [field]: value }));
@@ -112,11 +114,20 @@ const Onboarding = () => {
     : data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim();
   const canProceedStep3 = data.subjects.length > 0;
 
-  const handleComplete = () => {
-    console.log("Onboarding data:", data);
-    localStorage.setItem("userProfile", JSON.stringify(data));
-    toast.success("Perfil criado com sucesso!");
-    navigate("/dashboard");
+  const handleComplete = async () => {
+    try {
+      console.log("Onboarding data:", data);
+      localStorage.setItem("userProfile", JSON.stringify(data));
+      
+      // Mark onboarding as completed in the database
+      await completeOnboarding();
+      
+      toast.success("Perfil criado com sucesso!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      toast.error("Erro ao finalizar perfil. Tente novamente.");
+    }
   };
 
   return (

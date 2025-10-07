@@ -14,10 +14,13 @@ interface AuthContextType {
   session: Session | null;
   subscription: SubscriptionStatus | null;
   loading: boolean;
+  onboardingCompleted: boolean | null;
   signUp: (email: string, password: string, phone: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   checkSubscription: () => Promise<void>;
+  checkOnboardingStatus: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
   createCheckoutSession: () => Promise<void>;
   openCustomerPortal: () => Promise<void>;
 }
@@ -28,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -52,6 +56,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const checkOnboardingStatus = async () => {
+    if (!user) {
+      setOnboardingCompleted(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setOnboardingCompleted(data?.onboarding_completed ?? false);
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      setOnboardingCompleted(false);
+    }
+  };
+
+  const completeOnboarding = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ onboarding_completed: true })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      setOnboardingCompleted(true);
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
@@ -59,13 +101,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Defer subscription check
+        // Defer subscription and onboarding checks
         if (session?.user) {
           setTimeout(() => {
             checkSubscription();
+            checkOnboardingStatus();
           }, 0);
         } else {
           setSubscription({ subscribed: false });
+          setOnboardingCompleted(null);
         }
       }
     );
@@ -78,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         setTimeout(() => {
           checkSubscription();
+          checkOnboardingStatus();
         }, 0);
       }
       setLoading(false);
@@ -190,10 +235,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     subscription,
     loading,
+    onboardingCompleted,
     signUp,
     signIn,
     signOut,
     checkSubscription,
+    checkOnboardingStatus,
+    completeOnboarding,
     createCheckoutSession,
     openCustomerPortal,
   };
