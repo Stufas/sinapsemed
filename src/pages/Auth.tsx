@@ -109,28 +109,30 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="rounded-lg bg-gradient-primary p-3">
-              <Brain className="h-8 w-8 text-white" />
+        <div className="text-center mb-8 animate-fade-in">
+          <div className="flex justify-center mb-6">
+            <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-4 shadow-lg">
+              <Brain className="h-10 w-10 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold mb-2">
-            {isSignUp ? "Criar Conta" : "Entrar"}
+          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            {isSignUp ? "Criar Conta" : "Bem-vindo"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             {isSignUp
               ? "Comece sua jornada de estudos hoje"
-              : "Bem-vindo de volta!"}
+              : "Entre para continuar seus estudos"}
           </p>
         </div>
 
-        <Card className="p-8 shadow-elevated">
-          <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
+        <Card className="p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 animate-fade-in">
+          <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email" className="text-foreground font-medium">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -138,12 +140,15 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone *</Label>
+              <div className="space-y-2 animate-fade-in">
+                <Label htmlFor="phone" className="text-foreground font-medium">
+                  Telefone
+                </Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -151,12 +156,15 @@ const Auth = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
+                  className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="password">Senha *</Label>
+              <Label htmlFor="password" className="text-foreground font-medium">
+                Senha
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -164,12 +172,15 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+              <div className="space-y-2 animate-fade-in">
+                <Label htmlFor="confirmPassword" className="text-foreground font-medium">
+                  Confirmar Senha
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -177,13 +188,14 @@ const Auth = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
+                  className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             )}
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
               size="lg"
               disabled={loading}
             >
@@ -195,7 +207,7 @@ const Auth = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <button
               type="button"
               onClick={() => {
@@ -203,7 +215,7 @@ const Auth = () => {
                 setPassword("");
                 setConfirmPassword("");
               }}
-              className="text-sm text-primary hover:underline"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
             >
               {isSignUp
                 ? "Já tem uma conta? Faça login"
@@ -212,13 +224,13 @@ const Auth = () => {
           </div>
         </Card>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-8 text-center text-sm text-muted-foreground">
           Ao continuar, você concorda com nossos{" "}
-          <a href="#" className="text-primary hover:underline">
+          <a href="#" className="text-primary hover:underline font-medium">
             Termos de Serviço
           </a>{" "}
           e{" "}
-          <a href="#" className="text-primary hover:underline">
+          <a href="#" className="text-primary hover:underline font-medium">
             Política de Privacidade
           </a>
         </p>
