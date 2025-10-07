@@ -38,11 +38,11 @@ const App = () => (
           <Route path="/flashcards" element={<Layout><ProtectedRoute><FlashcardsPage /></ProtectedRoute></Layout>} />
           <Route path="/practice" element={<Layout><ProtectedRoute><PracticePage /></ProtectedRoute></Layout>} />
           <Route path="/questions" element={<Layout><ProtectedRoute><QuestionsPage /></ProtectedRoute></Layout>} />
-          <Route path="/schedule" element={<Layout><ProtectedRoute><SchedulePage /></ProtectedRoute></Layout>} />
+          <Route path="/schedule" element={<Layout><SchedulePage /></Layout>} />
           <Route path="/content" element={<Layout><ProtectedRoute><ContentPage /></ProtectedRoute></Layout>} />
           <Route path="/timer" element={<Layout><ProtectedRoute><TimerPage /></ProtectedRoute></Layout>} />
         <Route path="/chat" element={<Layout><ProtectedRoute><div className="text-center text-muted-foreground">Em breve...</div></ProtectedRoute></Layout>} />
-        <Route path="/community" element={<Layout><Community /></Layout>} />
+        <Route path="/community" element={<Layout><ProtectedRoute><Community /></ProtectedRoute></Layout>} />
         <Route path="/settings" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />

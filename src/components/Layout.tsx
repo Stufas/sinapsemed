@@ -42,14 +42,14 @@ const Layout = ({ children }: LayoutProps) => {
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", premium: false },
     { to: "/calendar", icon: Calendar, label: "Calendário", premium: true },
-    { to: "/schedule", icon: CalendarDays, label: "Cronograma", premium: true },
+    { to: "/schedule", icon: CalendarDays, label: "Cronograma", premium: false },
     { to: "/timer", icon: Timer, label: "Cronômetro", premium: true },
     { to: "/flashcards", icon: Brain, label: "Flashcards", premium: true },
     { to: "/practice", icon: Target, label: "Simulados", premium: true },
     { to: "/questions", icon: HelpCircle, label: "Questões", premium: true },
     { to: "/content", icon: BookOpen, label: "Conteúdo", premium: true },
     { to: "/chat", icon: MessageSquare, label: "Assistente IA", premium: true },
-    { to: "/community", icon: Users, label: "Comunidade", premium: false },
+    { to: "/community", icon: Users, label: "Comunidade", premium: true },
   ];
 
   const handlePremiumClick = (e: React.MouseEvent, to: string, isPremium: boolean) => {
@@ -100,8 +100,8 @@ const Layout = ({ children }: LayoutProps) => {
                   {isLocked ? (
                     <div className="flex items-center cursor-pointer opacity-60 hover:opacity-100 transition-opacity">
                       <Icon className="mr-3 h-5 w-5" />
-                      {item.label}
-                      <Lock className="ml-auto h-4 w-4 text-muted-foreground" />
+                      <span className="flex-1">{item.label}</span>
+                      <Lock className="h-4 w-4 text-muted-foreground" />
                     </div>
                   ) : (
                     <Link to={item.to}>
