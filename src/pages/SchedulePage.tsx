@@ -17,7 +17,8 @@ import {
   Loader2,
   Clock,
   BookOpen,
-  Download
+  Download,
+  FileText
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Subject {
   name: string;
@@ -208,6 +211,103 @@ Observações:
     
     toast({
       title: "Cronograma exportado!",
+      description: "Arquivo baixado com sucesso"
+    });
+  };
+
+  const exportScheduleToPDF = () => {
+    const doc = new jsPDF();
+    const dayNames = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(33, 150, 243);
+    doc.text("Cronograma de Estudos", 105, 20, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`, 105, 28, { align: "center" });
+    
+    let yPosition = 40;
+    
+    // Group schedule by day
+    const groupedSchedule = schedule.reduce((acc, event) => {
+      if (!acc[event.dayOfWeek]) {
+        acc[event.dayOfWeek] = [];
+      }
+      acc[event.dayOfWeek].push(event);
+      return acc;
+    }, {} as Record<number, ScheduleEvent[]>);
+    
+    // Sort by day and render each day
+    Object.entries(groupedSchedule)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .forEach(([dayOfWeek, events]) => {
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        // Day header
+        doc.setFontSize(14);
+        doc.setTextColor(33, 150, 243);
+        doc.text(dayNames[parseInt(dayOfWeek)], 14, yPosition);
+        yPosition += 8;
+        
+        // Create table for events
+        const tableData = events
+          .sort((a, b) => a.startTime.localeCompare(b.startTime))
+          .map(event => [
+            `${event.startTime} - ${event.endTime}`,
+            event.subject,
+            event.description || "-"
+          ]);
+        
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['Horário', 'Matéria', 'Método de Estudo']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [33, 150, 243],
+            textColor: 255,
+            fontStyle: 'bold',
+            fontSize: 10
+          },
+          bodyStyles: {
+            fontSize: 9,
+            textColor: 50
+          },
+          columnStyles: {
+            0: { cellWidth: 35 },
+            1: { cellWidth: 45 },
+            2: { cellWidth: 'auto' }
+          },
+          margin: { left: 14, right: 14 }
+        });
+        
+        yPosition = (doc as any).lastAutoTable.finalY + 10;
+      });
+    
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Página ${i} de ${pageCount} - Sinapse Med`,
+        105,
+        doc.internal.pageSize.height - 10,
+        { align: "center" }
+      );
+    }
+    
+    doc.save("cronograma-estudos.pdf");
+    
+    toast({
+      title: "PDF exportado!",
       description: "Arquivo baixado com sucesso"
     });
   };
@@ -457,10 +557,14 @@ Observações:
             </Card>
           ) : (
             <>
-              <div className="flex justify-end mb-4">
+              <div className="flex gap-2 justify-end mb-4">
                 <Button variant="outline" onClick={exportSchedule}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exportar TXT
+                </Button>
+                <Button variant="default" onClick={exportScheduleToPDF}>
                   <Download className="mr-2 h-4 w-4" />
-                  Exportar Cronograma
+                  Exportar PDF
                 </Button>
               </div>
               
