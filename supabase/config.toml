@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.generate-flashcards]
 verify_jwt = true
+
+[functions.generate-schedule]
+verify_jwt = true
