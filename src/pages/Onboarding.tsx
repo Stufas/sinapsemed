@@ -292,18 +292,6 @@ const Onboarding = () => {
                     onChange={(e) => updateData("pronoun", e.target.value)}
                   />
                 </div>
-                {data.profile !== "pre-med" && (
-                  <div>
-                    <Label htmlFor="semester">Período/Semestre (opcional)</Label>
-                    <Input 
-                      id="semester" 
-                      placeholder="Ex: 3º semestre" 
-                      className="mt-2"
-                      value={data.semester}
-                      onChange={(e) => updateData("semester", e.target.value)}
-                    />
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-3">
