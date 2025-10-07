@@ -33,6 +33,7 @@ interface OnboardingData {
   subjects: Subject[];
   exams: Exam[];
   studyHours: string;
+  flashcardsPerDay: string;
   preferences: string;
 }
 
@@ -49,6 +50,7 @@ const Onboarding = () => {
     subjects: [],
     exams: [],
     studyHours: "",
+    flashcardsPerDay: "",
     preferences: "",
   });
   
@@ -487,6 +489,23 @@ const Onboarding = () => {
                   />
                   <p className="mt-1 text-sm text-muted-foreground">
                     Quantas horas você pode dedicar aos estudos por dia?
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="flashcardsPerDay" className="mb-2 block font-semibold">
+                    Meta de flashcards por dia (opcional)
+                  </Label>
+                  <Input 
+                    id="flashcardsPerDay"
+                    type="number"
+                    min="1"
+                    placeholder="Ex: 20"
+                    value={data.flashcardsPerDay}
+                    onChange={(e) => updateData("flashcardsPerDay", e.target.value)}
+                  />
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Quantos flashcards você deseja revisar por dia?
                   </p>
                 </div>
 
