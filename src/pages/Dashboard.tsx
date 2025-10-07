@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, BookOpen, Brain, TrendingUp, Clock, CheckCircle2, Flame } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, BookOpen, Brain, TrendingUp, Clock, CheckCircle2, Flame, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import SubscriptionCard from "@/components/SubscriptionCard";
 
 interface UserStreak {
@@ -13,6 +15,7 @@ interface UserStreak {
 }
 
 const Dashboard = () => {
+  const { signOut } = useAuth();
   const [streak, setStreak] = useState<UserStreak | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,8 +88,21 @@ const Dashboard = () => {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex-1">
-          <h1 className="mb-2 text-2xl sm:text-3xl font-bold">{getUserGreeting()}</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Aqui está um resumo do seu progresso hoje</p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h1 className="mb-2 text-2xl sm:text-3xl font-bold">{getUserGreeting()}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">Aqui está um resumo do seu progresso hoje</p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={signOut}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+          </div>
         </div>
 
         {!loading && streak && (
