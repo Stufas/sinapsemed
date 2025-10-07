@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, Calendar, Target, TrendingUp, BookOpen, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -16,9 +19,15 @@ const Index = () => {
             <span className="text-lg sm:text-xl font-bold">Sinapse Med</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link to="/auth">Entrar</Link>
-            </Button>
+            {user ? (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+                <Link to="/auth">Entrar</Link>
+              </Button>
+            )}
             <Button size="sm" asChild>
               <Link to="/pricing" className="text-xs sm:text-sm">
                 <span className="hidden sm:inline">Comece por R$ 29,90/mês</span>
