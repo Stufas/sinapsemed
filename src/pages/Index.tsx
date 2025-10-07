@@ -10,32 +10,35 @@ const Index = () => {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="rounded-lg bg-gradient-primary p-2">
-              <Brain className="h-6 w-6 text-white" />
+            <div className="rounded-lg bg-gradient-primary p-1.5 sm:p-2">
+              <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <span className="text-xl font-bold">Sinapse Med</span>
+            <span className="text-lg sm:text-xl font-bold">Sinapse Med</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link to="/auth">Entrar</Link>
             </Button>
-            <Button asChild>
-              <Link to="/auth">Comece por R$ 29,90/mês</Link>
+            <Button size="sm" asChild>
+              <Link to="/auth" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Comece por R$ 29,90/mês</span>
+                <span className="sm:hidden">Começar</span>
+              </Link>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-primary py-20 px-4">
+      <section className="relative overflow-hidden bg-gradient-primary py-12 sm:py-16 md:py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col items-center text-center">
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm">
-              <Brain className="h-5 w-5 text-white" />
-              <span className="text-sm font-medium text-white">Plataforma de Estudos Inteligente</span>
+            <div className="mb-6 sm:mb-8 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-sm">
+              <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              <span className="text-xs sm:text-sm font-medium text-white">Plataforma de Estudos Inteligente</span>
             </div>
             
-            <h1 className="mb-6 text-4xl font-bold text-white md:text-6xl lg:text-7xl">
+            <h1 className="mb-4 sm:mb-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
               Estude de Forma
               <br />
               <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
@@ -43,17 +46,17 @@ const Index = () => {
               </span>
             </h1>
             
-            <p className="mb-8 max-w-2xl text-lg text-white/90 md:text-xl">
+            <p className="mb-6 sm:mb-8 max-w-2xl text-base sm:text-lg md:text-xl text-white/90 px-4">
               IA personalizada para universitários, médicos residentes e concurseiros. 
               Cronogramas adaptativos, flashcards inteligentes e calendário integrado.
             </p>
             
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <Button size="lg" variant="secondary" className="text-lg" asChild>
-                <Link to="/auth">Comece por R$ 29,90/mês</Link>
+            <div className="flex flex-col gap-3 sm:gap-4 w-full sm:w-auto sm:flex-row px-4">
+              <Button size="lg" variant="secondary" className="text-base sm:text-lg w-full sm:w-auto min-h-[48px]" asChild>
+                <Link to="/auth">Comece Agora</Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20" asChild>
-                <Link to="/demo">Ver Demonstração</Link>
+              <Button size="lg" variant="outline" className="border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 w-full sm:w-auto min-h-[48px]" asChild>
+                <Link to="/demo">Ver Demo</Link>
               </Button>
             </div>
           </div>
@@ -70,7 +73,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="p-6 shadow-card transition-all hover:shadow-elevated">
               <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3">
                 <Calendar className="h-6 w-6 text-primary" />

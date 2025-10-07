@@ -15,24 +15,27 @@ const Demo = () => {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="rounded-lg bg-gradient-primary p-2">
-              <Brain className="h-6 w-6 text-white" />
+            <div className="rounded-lg bg-gradient-primary p-1.5 sm:p-2">
+              <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <span className="text-xl font-bold">Sinapse Med</span>
+            <span className="text-lg sm:text-xl font-bold">Sinapse Med</span>
           </Link>
-          <Button asChild>
-            <Link to="/onboarding">Comece por R$ 29,90/mês</Link>
+          <Button size="sm" asChild className="min-h-[44px]">
+            <Link to="/onboarding" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Comece por R$ 29,90/mês</span>
+              <span className="sm:hidden">Começar</span>
+            </Link>
           </Button>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-primary py-16 px-4">
+      <section className="bg-gradient-primary py-12 sm:py-16 px-4">
         <div className="container mx-auto max-w-6xl text-center">
-          <h1 className="mb-4 text-4xl font-bold text-white md:text-5xl">
+          <h1 className="mb-3 sm:mb-4 text-3xl sm:text-4xl md:text-5xl font-bold text-white">
             Veja Como Funciona
           </h1>
-          <p className="mb-8 text-lg text-white/90">
+          <p className="text-base sm:text-lg text-white/90">
             Explore as principais funcionalidades da plataforma
           </p>
         </div>
@@ -41,13 +44,13 @@ const Demo = () => {
       {/* Demo Content */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-6xl">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-              <TabsTrigger value="dashboard" className="text-xs md:text-sm">Dashboard</TabsTrigger>
-              <TabsTrigger value="calendar" className="text-xs md:text-sm">Calendário</TabsTrigger>
-              <TabsTrigger value="flashcards" className="text-xs md:text-sm">Flashcards</TabsTrigger>
-              <TabsTrigger value="practice" className="text-xs md:text-sm">Simulados</TabsTrigger>
-              <TabsTrigger value="content" className="text-xs md:text-sm">Conteúdo IA</TabsTrigger>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 sm:space-y-8">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              <TabsTrigger value="dashboard" className="text-xs sm:text-sm min-h-[44px]">Dashboard</TabsTrigger>
+              <TabsTrigger value="calendar" className="text-xs sm:text-sm min-h-[44px]">Calendário</TabsTrigger>
+              <TabsTrigger value="flashcards" className="text-xs sm:text-sm min-h-[44px]">Flashcards</TabsTrigger>
+              <TabsTrigger value="practice" className="text-xs sm:text-sm min-h-[44px]">Simulados</TabsTrigger>
+              <TabsTrigger value="content" className="text-xs sm:text-sm min-h-[44px] col-span-2 sm:col-span-1">Conteúdo IA</TabsTrigger>
             </TabsList>
 
             {/* Dashboard Demo */}
@@ -59,7 +62,7 @@ const Demo = () => {
                 </p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <Card className="p-6">
                   <div className="flex items-center gap-4">
                     <div className="rounded-full bg-primary/10 p-3 flex-shrink-0">
@@ -283,7 +286,7 @@ const Demo = () => {
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
                 <Card className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <BookOpen className="h-6 w-6 text-primary flex-shrink-0" />

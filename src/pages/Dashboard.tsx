@@ -110,9 +110,9 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4 sm:p-6 shadow-card">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Horas Estudadas</p>
               <p className="text-xl sm:text-2xl font-bold">4.5h</p>
@@ -125,7 +125,7 @@ const Dashboard = () => {
         </Card>
 
         <Card className="p-4 sm:p-6 shadow-card">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Flashcards</p>
               <p className="text-xl sm:text-2xl font-bold">42</p>
@@ -138,7 +138,7 @@ const Dashboard = () => {
         </Card>
 
         <Card className="p-4 sm:p-6 shadow-card">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Acertos</p>
               <p className="text-xl sm:text-2xl font-bold">85%</p>
@@ -151,7 +151,7 @@ const Dashboard = () => {
         </Card>
 
         <Card className="p-4 sm:p-6 shadow-card">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Próx. Prova</p>
               <p className="text-xl sm:text-2xl font-bold">12 dias</p>
@@ -170,26 +170,26 @@ const Dashboard = () => {
       {/* Main Content Tabs */}
       <Tabs defaultValue="progress" className="space-y-4">
         <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="progress" className="text-xs sm:text-sm">
-            <TrendingUp className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+          <TabsTrigger value="progress" className="text-xs sm:text-sm min-h-[44px]">
+            <TrendingUp className="mr-1 sm:mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Progresso</span>
             <span className="sm:hidden">Prog.</span>
           </TabsTrigger>
-          <TabsTrigger value="schedule" className="text-xs sm:text-sm">
-            <Calendar className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+          <TabsTrigger value="schedule" className="text-xs sm:text-sm min-h-[44px]">
+            <Calendar className="mr-1 sm:mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Cronograma</span>
             <span className="sm:hidden">Crono.</span>
           </TabsTrigger>
-          <TabsTrigger value="flashcards" className="text-xs sm:text-sm">
-            <Brain className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+          <TabsTrigger value="flashcards" className="text-xs sm:text-sm min-h-[44px]">
+            <Brain className="mr-1 sm:mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Flashcards</span>
             <span className="sm:hidden">Flash.</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="progress" className="space-y-4">
-          <Card className="p-6 shadow-card">
-            <h3 className="mb-4 text-lg font-semibold">Progresso por Matéria</h3>
+          <Card className="p-4 sm:p-6 shadow-card">
+            <h3 className="mb-4 text-base sm:text-lg font-semibold">Progresso por Matéria</h3>
             <div className="space-y-4">
               <div>
                 <div className="mb-2 flex items-center justify-between">
@@ -222,9 +222,9 @@ const Dashboard = () => {
             </div>
           </Card>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="p-6 shadow-card">
-              <h3 className="mb-4 text-lg font-semibold">Tópicos para Revisar</h3>
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            <Card className="p-4 sm:p-6 shadow-card">
+              <h3 className="mb-4 text-base sm:text-lg font-semibold">Tópicos para Revisar</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
                   <BookOpen className="h-4 w-4 text-warning" />
@@ -241,8 +241,8 @@ const Dashboard = () => {
               </div>
             </Card>
 
-            <Card className="p-6 shadow-card">
-              <h3 className="mb-4 text-lg font-semibold">Conquistas Recentes</h3>
+            <Card className="p-4 sm:p-6 shadow-card">
+              <h3 className="mb-4 text-base sm:text-lg font-semibold">Conquistas Recentes</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3">
                   <CheckCircle2 className="h-4 w-4 text-success" />
@@ -262,8 +262,8 @@ const Dashboard = () => {
         </TabsContent>
 
         <TabsContent value="schedule">
-          <Card className="p-6 shadow-card">
-            <h3 className="mb-4 text-lg font-semibold">Próximas Atividades</h3>
+          <Card className="p-4 sm:p-6 shadow-card">
+            <h3 className="mb-4 text-base sm:text-lg font-semibold">Próximas Atividades</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 rounded-lg border p-4">
                 <div className="rounded-full bg-calendar-exam/10 p-2">
@@ -297,13 +297,13 @@ const Dashboard = () => {
         </TabsContent>
 
         <TabsContent value="flashcards">
-          <Card className="p-6 shadow-card">
-            <h3 className="mb-4 text-lg font-semibold">Flashcards para Hoje</h3>
+          <Card className="p-4 sm:p-6 shadow-card">
+            <h3 className="mb-4 text-base sm:text-lg font-semibold">Flashcards para Hoje</h3>
             <div className="mb-6 rounded-lg bg-gradient-primary p-6 text-center">
               <p className="mb-2 text-4xl font-bold text-white">15</p>
               <p className="text-white/90">Cartões aguardando revisão</p>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-2">
               <div className="rounded-lg border p-4">
                 <p className="mb-1 text-sm text-muted-foreground">Novos</p>
                 <p className="text-2xl font-bold">8</p>
