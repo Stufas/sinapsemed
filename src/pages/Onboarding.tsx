@@ -108,8 +108,8 @@ const Onboarding = () => {
 
   const canProceedStep1 = data.profile !== "";
   const canProceedStep2 = data.profile === "pre-med" 
-    ? data.name.trim() && data.gender.trim() && data.course.trim()
-    : data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim();
+    ? data.name.trim() && data.gender.trim() && data.course.trim() && (data.gender !== "outro" || data.pronoun.trim())
+    : data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim() && (data.gender !== "outro" || data.pronoun.trim());
   const canProceedStep3 = data.subjects.length > 0;
   const canComplete = data.exams.length > 0 && data.studyHours;
 
@@ -282,16 +282,18 @@ const Onboarding = () => {
                     <option value="outro">Outro</option>
                   </select>
                 </div>
-                <div>
-                  <Label htmlFor="pronoun">Pronome preferido (opcional)</Label>
-                  <Input 
-                    id="pronoun" 
-                    placeholder="Ex: ele/dele, ela/dela, elu/delu" 
-                    className="mt-2"
-                    value={data.pronoun}
-                    onChange={(e) => updateData("pronoun", e.target.value)}
-                  />
-                </div>
+                {data.gender === "outro" && (
+                  <div>
+                    <Label htmlFor="pronoun">Pronome preferido *</Label>
+                    <Input 
+                      id="pronoun" 
+                      placeholder="Ex: ele/dele, ela/dela, elu/delu" 
+                      className="mt-2"
+                      value={data.pronoun}
+                      onChange={(e) => updateData("pronoun", e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">
