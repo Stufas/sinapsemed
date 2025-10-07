@@ -155,7 +155,7 @@ const Onboarding = () => {
                         <Target className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <p className="font-semibold">Pré-med</p>
+                        <p className="font-semibold">Futuro Médico</p>
                         <p className="text-sm text-muted-foreground">
                           Para você que está estudando para faculdade de medicina
                         </p>
@@ -191,7 +191,7 @@ const Onboarding = () => {
                         <Stethoscope className="h-6 w-6 text-accent" />
                       </div>
                       <div>
-                        <p className="font-semibold">Médico Residente</p>
+                        <p className="font-semibold">Futuro Residente</p>
                         <p className="text-sm text-muted-foreground">
                           Preparação para residência médica
                         </p>
