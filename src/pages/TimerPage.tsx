@@ -77,20 +77,33 @@ const TimerPage = () => {
   };
 
   const playNotificationSound = () => {
-    // Create a simple beep sound
+    // Create a more noticeable notification with 3 beeps
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
     
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    const playBeep = (time: number, frequency: number) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+      
+      // Envelope for smooth sound
+      gainNode.gain.setValueAtTime(0, time);
+      gainNode.gain.linearRampToValueAtTime(0.5, time + 0.05);
+      gainNode.gain.linearRampToValueAtTime(0, time + 0.3);
+      
+      oscillator.start(time);
+      oscillator.stop(time + 0.3);
+    };
     
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    gainNode.gain.value = 0.3;
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.2);
+    // Play 3 beeps with increasing pitch
+    const startTime = audioContext.currentTime;
+    playBeep(startTime, 600);
+    playBeep(startTime + 0.4, 700);
+    playBeep(startTime + 0.8, 800);
   };
 
   const startTimer = () => {
