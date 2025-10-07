@@ -96,7 +96,7 @@ const Auth = () => {
       }
 
       toast.success("Login realizado com sucesso!");
-      navigate("/onboarding");
+      navigate("/dashboard");
     } catch (error) {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => {
