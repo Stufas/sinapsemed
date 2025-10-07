@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, BookOpen, Brain, TrendingUp, Clock, CheckCircle2, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import SubscriptionCard from "@/components/SubscriptionCard";
 
 interface UserStreak {
   current_streak: number;
@@ -162,6 +163,9 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      {/* Subscription Card */}
+      <SubscriptionCard />
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="progress" className="space-y-4">
