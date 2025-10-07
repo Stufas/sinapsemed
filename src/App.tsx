@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
 import CalendarPage from "./pages/CalendarPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
+import PracticePage from "./pages/PracticePage";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 
@@ -25,7 +26,7 @@ const App = () => (
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/calendar" element={<Layout><CalendarPage /></Layout>} />
           <Route path="/flashcards" element={<Layout><FlashcardsPage /></Layout>} />
-          <Route path="/practice" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
+          <Route path="/practice" element={<Layout><PracticePage /></Layout>} />
           <Route path="/content" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
           <Route path="/chat" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
           <Route path="/community" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
