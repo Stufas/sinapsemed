@@ -17,6 +17,7 @@ import SchedulePage from "./pages/SchedulePage";
 import Community from "./pages/Community";
 import Demo from "./pages/Demo";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,14 +34,14 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/calendar" element={<Layout><CalendarPage /></Layout>} />
-          <Route path="/flashcards" element={<Layout><FlashcardsPage /></Layout>} />
-          <Route path="/practice" element={<Layout><PracticePage /></Layout>} />
-          <Route path="/questions" element={<Layout><QuestionsPage /></Layout>} />
-          <Route path="/schedule" element={<Layout><SchedulePage /></Layout>} />
-          <Route path="/content" element={<Layout><ContentPage /></Layout>} />
-          <Route path="/timer" element={<Layout><TimerPage /></Layout>} />
-        <Route path="/chat" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
+        <Route path="/calendar" element={<Layout><ProtectedRoute><CalendarPage /></ProtectedRoute></Layout>} />
+          <Route path="/flashcards" element={<Layout><ProtectedRoute><FlashcardsPage /></ProtectedRoute></Layout>} />
+          <Route path="/practice" element={<Layout><ProtectedRoute><PracticePage /></ProtectedRoute></Layout>} />
+          <Route path="/questions" element={<Layout><ProtectedRoute><QuestionsPage /></ProtectedRoute></Layout>} />
+          <Route path="/schedule" element={<Layout><ProtectedRoute><SchedulePage /></ProtectedRoute></Layout>} />
+          <Route path="/content" element={<Layout><ProtectedRoute><ContentPage /></ProtectedRoute></Layout>} />
+          <Route path="/timer" element={<Layout><ProtectedRoute><TimerPage /></ProtectedRoute></Layout>} />
+        <Route path="/chat" element={<Layout><ProtectedRoute><div className="text-center text-muted-foreground">Em breve...</div></ProtectedRoute></Layout>} />
         <Route path="/community" element={<Layout><Community /></Layout>} />
         <Route path="/settings" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

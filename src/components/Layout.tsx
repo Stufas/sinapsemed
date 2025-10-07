@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { ReactNode, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, 
@@ -12,8 +12,22 @@ import {
   Timer,
   MessageSquare, 
   Users,
-  Settings
+  Settings,
+  Lock,
+  Crown
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,19 +35,39 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { subscription, createCheckoutSession, loading } = useAuth();
+  const [showSubscribeDialog, setShowSubscribeDialog] = useState(false);
 
   const navItems = [
-    { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/calendar", icon: Calendar, label: "Calendário" },
-    { to: "/schedule", icon: CalendarDays, label: "Cronograma" },
-    { to: "/timer", icon: Timer, label: "Cronômetro" },
-    { to: "/flashcards", icon: Brain, label: "Flashcards" },
-    { to: "/practice", icon: Target, label: "Simulados" },
-    { to: "/questions", icon: HelpCircle, label: "Questões" },
-    { to: "/content", icon: BookOpen, label: "Conteúdo" },
-    { to: "/chat", icon: MessageSquare, label: "Assistente IA" },
-    { to: "/community", icon: Users, label: "Comunidade" },
+    { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", premium: false },
+    { to: "/calendar", icon: Calendar, label: "Calendário", premium: true },
+    { to: "/schedule", icon: CalendarDays, label: "Cronograma", premium: true },
+    { to: "/timer", icon: Timer, label: "Cronômetro", premium: true },
+    { to: "/flashcards", icon: Brain, label: "Flashcards", premium: true },
+    { to: "/practice", icon: Target, label: "Simulados", premium: true },
+    { to: "/questions", icon: HelpCircle, label: "Questões", premium: true },
+    { to: "/content", icon: BookOpen, label: "Conteúdo", premium: true },
+    { to: "/chat", icon: MessageSquare, label: "Assistente IA", premium: true },
+    { to: "/community", icon: Users, label: "Comunidade", premium: false },
   ];
+
+  const handlePremiumClick = (e: React.MouseEvent, to: string, isPremium: boolean) => {
+    if (isPremium && !subscription?.subscribed) {
+      e.preventDefault();
+      setShowSubscribeDialog(true);
+    }
+  };
+
+  const handleSubscribe = async () => {
+    try {
+      await createCheckoutSession();
+      toast.success("Redirecionando para o pagamento...");
+      setShowSubscribeDialog(false);
+    } catch (error) {
+      toast.error("Erro ao iniciar checkout. Tente novamente.");
+    }
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -53,30 +87,47 @@ const Layout = ({ children }: LayoutProps) => {
             {navItems.map((item) => {
               const isActive = location.pathname === item.to;
               const Icon = item.icon;
+              const isLocked = item.premium && !subscription?.subscribed;
               
               return (
                 <Button
                   key={item.to}
                   variant={isActive ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  asChild
+                  className="w-full justify-start relative"
+                  asChild={!isLocked}
+                  onClick={(e) => handlePremiumClick(e, item.to, item.premium)}
                 >
-                  <Link to={item.to}>
-                    <Icon className="mr-3 h-5 w-5" />
-                    {item.label}
-                  </Link>
+                  {isLocked ? (
+                    <div className="flex items-center cursor-pointer opacity-60 hover:opacity-100 transition-opacity">
+                      <Icon className="mr-3 h-5 w-5" />
+                      {item.label}
+                      <Lock className="ml-auto h-4 w-4 text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <Link to={item.to}>
+                      <Icon className="mr-3 h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  )}
                 </Button>
               );
             })}
           </nav>
 
-          <div className="border-t p-4">
+          <div className="border-t p-4 space-y-1">
             <Button variant="ghost" className="w-full justify-start" asChild>
               <Link to="/settings">
                 <Settings className="mr-3 h-5 w-5" />
                 Configurações
               </Link>
             </Button>
+            
+            {subscription?.subscribed && (
+              <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                <Crown className="h-3 w-3 text-primary" />
+                Plano Ativo
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -87,6 +138,53 @@ const Layout = ({ children }: LayoutProps) => {
           {children}
         </div>
       </main>
+
+      {/* Subscribe Dialog */}
+      <AlertDialog open={showSubscribeDialog} onOpenChange={setShowSubscribeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mb-4 flex justify-center">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Crown className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <AlertDialogTitle className="text-center text-2xl">
+              Assine para usar este recurso
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Esta funcionalidade está disponível apenas para assinantes. 
+              Por apenas R$ 29,90/mês você terá acesso completo a:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="space-y-3 my-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Crown className="h-4 w-4 text-primary flex-shrink-0" />
+              <span>IA ilimitada para cronogramas e flashcards</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Crown className="h-4 w-4 text-primary flex-shrink-0" />
+              <span>Questões e simulados personalizados</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Crown className="h-4 w-4 text-primary flex-shrink-0" />
+              <span>Calendário inteligente sincronizado</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Crown className="h-4 w-4 text-primary flex-shrink-0" />
+              <span>Comunidade e grupos de estudo</span>
+            </div>
+          </div>
+
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="mt-0">Agora não</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubscribe}>
+              <Crown className="mr-2 h-4 w-4" />
+              Sim, quero assinar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
