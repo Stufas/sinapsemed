@@ -11,6 +11,7 @@ import PracticePage from "./pages/PracticePage";
 import QuestionsPage from "./pages/QuestionsPage";
 import ContentPage from "./pages/ContentPage";
 import TimerPage from "./pages/TimerPage";
+import Community from "./pages/Community";
 import Demo from "./pages/Demo";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
@@ -34,7 +35,7 @@ const App = () => (
           <Route path="/content" element={<Layout><ContentPage /></Layout>} />
           <Route path="/timer" element={<Layout><TimerPage /></Layout>} />
         <Route path="/chat" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
-        <Route path="/community" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
+        <Route path="/community" element={<Layout><Community /></Layout>} />
         <Route path="/settings" element={<Layout><div className="text-center text-muted-foreground">Em breve...</div></Layout>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
