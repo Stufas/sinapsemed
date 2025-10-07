@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
 import Auth from "./pages/Auth";
+import Pricing from "./pages/Pricing";
 import CalendarPage from "./pages/CalendarPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import PracticePage from "./pages/PracticePage";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/demo" element={<Demo />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/calendar" element={<Layout><CalendarPage /></Layout>} />

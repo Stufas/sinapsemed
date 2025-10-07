@@ -20,7 +20,7 @@ const Index = () => {
               <Link to="/auth">Entrar</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link to="/auth" className="text-xs sm:text-sm">
+              <Link to="/pricing" className="text-xs sm:text-sm">
                 <span className="hidden sm:inline">Comece por R$ 29,90/mês</span>
                 <span className="sm:hidden">Começar</span>
               </Link>
@@ -53,7 +53,7 @@ const Index = () => {
             
             <div className="flex flex-col gap-3 sm:gap-4 w-full sm:w-auto sm:flex-row px-4">
               <Button size="lg" variant="secondary" className="text-base sm:text-lg w-full sm:w-auto min-h-[48px]" asChild>
-                <Link to="/auth">Comece Agora</Link>
+                <Link to="/pricing">Comece Agora</Link>
               </Button>
               <Button size="lg" variant="outline" className="border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 w-full sm:w-auto min-h-[48px]" asChild>
                 <Link to="/demo">Ver Demo</Link>
@@ -148,7 +148,7 @@ const Index = () => {
               Junte-se a milhares de estudantes que já estão alcançando seus objetivos
             </p>
             <Button size="lg" variant="secondary" className="text-lg" asChild>
-              <Link to="/auth">Comece por R$ 29,90/mês</Link>
+              <Link to="/pricing">Ver Planos</Link>
             </Button>
           </Card>
         </div>
