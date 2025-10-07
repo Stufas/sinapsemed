@@ -26,6 +26,7 @@ const signInSchema = z.object({
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -108,6 +109,36 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const validated = z.string().email({ message: "Email inválido" }).parse(email);
+      setLoading(true);
+
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.auth.resetPasswordForEmail(validated, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+      setIsForgotPassword(false);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Erro ao enviar email de recuperação");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
@@ -118,17 +149,22 @@ const Auth = () => {
             </div>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-            {isSignUp ? "Criar Conta" : "Bem-vindo"}
+            {isForgotPassword ? "Recuperar Senha" : isSignUp ? "Criar Conta" : "Bem-vindo"}
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg">
-            {isSignUp
+            {isForgotPassword
+              ? "Digite seu email para recuperar sua senha"
+              : isSignUp
               ? "Comece sua jornada de estudos hoje"
               : "Entre para continuar seus estudos"}
           </p>
         </div>
 
         <Card className="p-6 sm:p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 animate-fade-in">
-          <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4 sm:space-y-5">
+          <form 
+            onSubmit={isForgotPassword ? handleForgotPassword : isSignUp ? handleSignUp : handleSignIn} 
+            className="space-y-4 sm:space-y-5"
+          >
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground font-medium">
                 Email
@@ -144,7 +180,7 @@ const Auth = () => {
               />
             </div>
 
-            {isSignUp && (
+            {!isForgotPassword && isSignUp && (
               <div className="space-y-2 animate-fade-in">
                 <Label htmlFor="phone" className="text-foreground font-medium">
                   Telefone
@@ -161,22 +197,24 @@ const Auth = () => {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground font-medium">
-                Senha
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
+            {!isForgotPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-foreground font-medium">
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+            )}
 
-            {isSignUp && (
+            {!isForgotPassword && isSignUp && (
               <div className="space-y-2 animate-fade-in">
                 <Label htmlFor="confirmPassword" className="text-foreground font-medium">
                   Confirmar Senha
@@ -193,6 +231,18 @@ const Auth = () => {
               </div>
             )}
 
+            {!isForgotPassword && !isSignUp && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(true)}
+                  className="text-sm text-primary hover:underline font-medium"
+                >
+                  Esqueceu a senha?
+                </button>
+              </div>
+            )}
+
             <Button
               type="submit"
               className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
@@ -201,6 +251,8 @@ const Auth = () => {
             >
               {loading
                 ? "Carregando..."
+                : isForgotPassword
+                ? "Enviar Email"
                 : isSignUp
                 ? "Criar Conta"
                 : "Entrar"}
@@ -211,13 +263,19 @@ const Auth = () => {
             <button
               type="button"
               onClick={() => {
-                setIsSignUp(!isSignUp);
+                if (isForgotPassword) {
+                  setIsForgotPassword(false);
+                } else {
+                  setIsSignUp(!isSignUp);
+                }
                 setPassword("");
                 setConfirmPassword("");
               }}
               className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
             >
-              {isSignUp
+              {isForgotPassword
+                ? "Voltar para login"
+                : isSignUp
                 ? "Já tem uma conta? Faça login"
                 : "Não tem uma conta? Cadastre-se"}
             </button>
