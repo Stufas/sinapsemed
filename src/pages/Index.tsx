@@ -52,8 +52,8 @@ const Index = () => {
               <Button size="lg" variant="secondary" className="text-lg" asChild>
                 <Link to="/onboarding">Comece por R$ 29,90/mês</Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20">
-                Ver Demonstração
+              <Button size="lg" variant="outline" className="border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20" asChild>
+                <Link to="/demo">Ver Demonstração</Link>
               </Button>
             </div>
           </div>

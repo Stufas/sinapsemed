@@ -9,6 +9,7 @@ import CalendarPage from "./pages/CalendarPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import PracticePage from "./pages/PracticePage";
 import ContentPage from "./pages/ContentPage";
+import Demo from "./pages/Demo";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 
@@ -19,9 +20,10 @@ const App = () => (
     <Toaster />
     <Sonner />
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/demo" element={<Demo />} />
+          <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/calendar" element={<Layout><CalendarPage /></Layout>} />
         <Route path="/flashcards" element={<Layout><FlashcardsPage /></Layout>} />
