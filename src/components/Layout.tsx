@@ -41,15 +41,15 @@ const Layout = ({ children }: LayoutProps) => {
 
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", premium: false },
-    { to: "/calendar", icon: Calendar, label: "Calendário", premium: true },
+    { to: "/calendar", icon: Calendar, label: "Calendário", premium: false },
     { to: "/schedule", icon: CalendarDays, label: "Cronograma", premium: false },
     { to: "/timer", icon: Timer, label: "Cronômetro", premium: false },
-    { to: "/flashcards", icon: Brain, label: "Flashcards", premium: true },
-    { to: "/practice", icon: Target, label: "Simulados", premium: true },
-    { to: "/questions", icon: HelpCircle, label: "Questões", premium: true },
-    { to: "/content", icon: BookOpen, label: "Conteúdo", premium: true },
-    { to: "/chat", icon: MessageSquare, label: "Assistente IA", premium: true },
-    { to: "/community", icon: Users, label: "Comunidade", premium: true },
+    { to: "/flashcards", icon: Brain, label: "Flashcards", premium: false },
+    { to: "/practice", icon: Target, label: "Simulados", premium: false },
+    { to: "/questions", icon: HelpCircle, label: "Questões", premium: false },
+    { to: "/content", icon: BookOpen, label: "Conteúdo", premium: false },
+    { to: "/chat", icon: MessageSquare, label: "Assistente IA", premium: false },
+    { to: "/community", icon: Users, label: "Comunidade", premium: false },
   ];
 
   const handlePremiumClick = (e: React.MouseEvent, to: string, isPremium: boolean) => {
