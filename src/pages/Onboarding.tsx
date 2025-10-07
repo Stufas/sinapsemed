@@ -107,7 +107,9 @@ const Onboarding = () => {
   };
 
   const canProceedStep1 = data.profile !== "";
-  const canProceedStep2 = data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim();
+  const canProceedStep2 = data.profile === "pre-med" 
+    ? data.name.trim() && data.gender.trim() && data.course.trim()
+    : data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim();
   const canProceedStep3 = data.subjects.length > 0;
   const canComplete = data.exams.length > 0 && data.studyHours;
 
@@ -238,16 +240,18 @@ const Onboarding = () => {
                     onChange={(e) => updateData("name", e.target.value)}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="institution">Instituição *</Label>
-                  <Input
-                    id="institution"
-                    placeholder="Ex: Universidade Federal de São Paulo"
-                    className="mt-2"
-                    value={data.institution}
-                    onChange={(e) => updateData("institution", e.target.value)}
-                  />
-                </div>
+                {data.profile !== "pre-med" && (
+                  <div>
+                    <Label htmlFor="institution">Instituição *</Label>
+                    <Input
+                      id="institution"
+                      placeholder="Ex: Universidade Federal de São Paulo"
+                      className="mt-2"
+                      value={data.institution}
+                      onChange={(e) => updateData("institution", e.target.value)}
+                    />
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="course">Curso ou Área *</Label>
                   <Input 
@@ -282,16 +286,18 @@ const Onboarding = () => {
                     onChange={(e) => updateData("pronoun", e.target.value)}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="semester">Período/Semestre (opcional)</Label>
-                  <Input 
-                    id="semester" 
-                    placeholder="Ex: 3º semestre" 
-                    className="mt-2"
-                    value={data.semester}
-                    onChange={(e) => updateData("semester", e.target.value)}
-                  />
-                </div>
+                {data.profile !== "pre-med" && (
+                  <div>
+                    <Label htmlFor="semester">Período/Semestre (opcional)</Label>
+                    <Input 
+                      id="semester" 
+                      placeholder="Ex: 3º semestre" 
+                      className="mt-2"
+                      value={data.semester}
+                      onChange={(e) => updateData("semester", e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">
