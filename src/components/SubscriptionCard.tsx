@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CreditCard, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 const SubscriptionCard = () => {
   const { subscription, createCheckoutSession, openCustomerPortal } = useAuth();
@@ -96,12 +97,14 @@ const SubscriptionCard = () => {
       </ul>
 
       <Button 
-        onClick={handleSubscribe}
+        asChild
         className="w-full"
         size="lg"
       >
-        <Crown className="mr-2 h-4 w-4" />
-        Assinar Agora
+        <Link to="/pricing">
+          <Crown className="mr-2 h-4 w-4" />
+          Assinar Agora
+        </Link>
       </Button>
     </Card>
   );
