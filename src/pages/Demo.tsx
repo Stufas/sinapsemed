@@ -21,7 +21,7 @@ const Demo = () => {
             <span className="text-lg sm:text-xl font-bold">Sinapse Med</span>
           </Link>
           <Button size="sm" asChild className="min-h-[44px]">
-            <Link to="/onboarding" className="text-xs sm:text-sm">
+            <Link to="/pricing" className="text-xs sm:text-sm">
               <span className="hidden sm:inline">Comece por R$ 29,90/mês</span>
               <span className="sm:hidden">Começar</span>
             </Link>
@@ -350,7 +350,7 @@ const Demo = () => {
             Junte-se a milhares de estudantes que já transformaram seus estudos
           </p>
           <Button size="lg" asChild>
-            <Link to="/onboarding">
+            <Link to="/pricing">
               Comece por R$ 29,90/mês
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
