@@ -297,7 +297,7 @@ const QuestionsPage = () => {
 
           <Tabs defaultValue="create" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="create">Criar Questão</TabsTrigger>
+              <TabsTrigger value="create">Gerar Questão IA</TabsTrigger>
               <TabsTrigger value="list">Minhas Questões ({totalQuestions})</TabsTrigger>
             </TabsList>
 
@@ -390,7 +390,7 @@ const QuestionsPage = () => {
                     <div className="text-center py-8 text-muted-foreground">
                       <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>Nenhuma questão criada ainda.</p>
-                      <p className="text-sm">Crie sua primeira questão na aba "Criar Questão"</p>
+                      <p className="text-sm">Crie sua primeira questão na aba "Gerar Questão IA"</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
