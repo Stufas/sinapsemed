@@ -14,14 +14,63 @@ interface UserStreak {
   last_activity_date: string;
 }
 
+interface StudyStats {
+  totalHours: number;
+  topSubject: string;
+  uniqueTopics: number;
+}
+
 const Dashboard = () => {
   const { signOut } = useAuth();
   const [streak, setStreak] = useState<UserStreak | null>(null);
   const [loading, setLoading] = useState(true);
+  const [studyStats, setStudyStats] = useState<StudyStats | null>(null);
 
   useEffect(() => {
     loadStreak();
+    loadStudyStats();
   }, []);
+
+  const loadStudyStats = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get sessions from last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data: sessions, error } = await supabase
+        .from("study_sessions")
+        .select("duration_minutes, subject_name, topic")
+        .gte("completed_at", sevenDaysAgo.toISOString());
+
+      if (error) throw error;
+
+      if (sessions && sessions.length > 0) {
+        // Calculate total hours
+        const totalMinutes = sessions.reduce((sum, s) => sum + s.duration_minutes, 0);
+        const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
+
+        // Find most studied subject
+        const subjectCounts: Record<string, number> = {};
+        sessions.forEach(s => {
+          subjectCounts[s.subject_name] = (subjectCounts[s.subject_name] || 0) + s.duration_minutes;
+        });
+        const topSubject = Object.entries(subjectCounts)
+          .sort(([, a], [, b]) => b - a)[0]?.[0] || "";
+
+        // Count unique topics
+        const uniqueTopics = new Set(sessions.map(s => s.topic)).size;
+
+        setStudyStats({ totalHours, topSubject, uniqueTopics });
+      } else {
+        setStudyStats({ totalHours: 0, topSubject: "", uniqueTopics: 0 });
+      }
+    } catch (error) {
+      console.error("Error loading study stats:", error);
+    }
+  };
 
   const loadStreak = async () => {
     try {
@@ -131,8 +180,10 @@ const Dashboard = () => {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Horas Estudadas</p>
-              <p className="text-xl sm:text-2xl font-bold">4.5h</p>
-              <p className="text-xs text-success">+12%</p>
+              <p className="text-xl sm:text-2xl font-bold">
+                {studyStats ? `${studyStats.totalHours}h` : "0h"}
+              </p>
+              <p className="text-xs text-muted-foreground">Últimos 7 dias</p>
             </div>
             <div className="rounded-full bg-primary/10 p-2 sm:p-3 flex-shrink-0">
               <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
@@ -169,12 +220,16 @@ const Dashboard = () => {
         <Card className="p-4 sm:p-6 shadow-card">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Próx. Prova</p>
-              <p className="text-xl sm:text-2xl font-bold">12 dias</p>
-              <p className="text-xs text-warning truncate">Anatomia I</p>
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Matéria Principal</p>
+              <p className="text-xl sm:text-2xl font-bold truncate">
+                {studyStats?.topSubject || "-"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {studyStats?.uniqueTopics || 0} assuntos
+              </p>
             </div>
             <div className="rounded-full bg-warning/10 p-2 sm:p-3 flex-shrink-0">
-              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-warning" />
+              <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-warning" />
             </div>
           </div>
         </Card>

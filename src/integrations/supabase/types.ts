@@ -177,6 +177,56 @@ export type Database = {
         }
         Relationships: []
       }
+      study_sessions: {
+        Row: {
+          completed_at: string
+          created_at: string | null
+          duration_minutes: number
+          id: string
+          notes: string | null
+          started_at: string
+          subject_id: string | null
+          subject_name: string
+          timer_mode: string
+          topic: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at: string
+          created_at?: string | null
+          duration_minutes: number
+          id?: string
+          notes?: string | null
+          started_at: string
+          subject_id?: string | null
+          subject_name: string
+          timer_mode: string
+          topic?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          started_at?: string
+          subject_id?: string | null
+          subject_name?: string
+          timer_mode?: string
+          topic?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_sessions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subjects: {
         Row: {
           color: string | null

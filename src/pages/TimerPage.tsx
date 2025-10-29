@@ -1,12 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Play, Pause, RotateCcw, Clock, Coffee, Brain, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Play, Pause, RotateCcw, Clock, Coffee, Brain, TrendingUp, BookOpen, History } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { StudySessionDialog, type StudySessionConfig } from "@/components/StudySessionDialog";
+import { trackActivity, POINTS } from "@/lib/points";
+import { format } from "date-fns";
 
 type TimerMode = "pomodoro" | "long-pomodoro" | "custom";
 type TimerState = "idle" | "work" | "break";
@@ -16,6 +21,16 @@ const TIMER_PRESETS = {
   "long-pomodoro": { work: 50, break: 10, longBreak: 20 },
   custom: { work: 25, break: 5, longBreak: 15 },
 };
+
+interface StudySession {
+  id: string;
+  subject_name: string;
+  topic: string;
+  duration_minutes: number;
+  timer_mode: string;
+  completed_at: string;
+  notes?: string;
+}
 
 const TimerPage = () => {
   const [mode, setMode] = useState<TimerMode>("pomodoro");
@@ -27,6 +42,12 @@ const TimerPage = () => {
   const [customBreak, setCustomBreak] = useState(5);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Study session tracking
+  const [currentSession, setCurrentSession] = useState<StudySessionConfig | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [showSessionDialog, setShowSessionDialog] = useState(false);
+  const [studySessions, setStudySessions] = useState<StudySession[]>([]);
 
   useEffect(() => {
     // Load stats from localStorage
@@ -35,7 +56,68 @@ const TimerPage = () => {
       const stats = JSON.parse(saved);
       setSessionsCompleted(stats.sessionsCompleted || 0);
     }
+    
+    // Load study sessions
+    loadStudySessions();
+    
+    // Check for saved active session
+    const savedSession = localStorage.getItem("activeStudySession");
+    if (savedSession) {
+      try {
+        const { session, startTime, timeLeft: savedTimeLeft, state: savedState, mode: savedMode } = JSON.parse(savedSession);
+        toast.info("Você tem uma sessão em andamento", {
+          action: {
+            label: "Continuar",
+            onClick: () => {
+              setCurrentSession(session);
+              setSessionStartTime(new Date(startTime));
+              setTimeLeft(savedTimeLeft);
+              setState(savedState);
+              setMode(savedMode);
+              setIsRunning(true);
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error restoring session:", error);
+        localStorage.removeItem("activeStudySession");
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    // Save active session to localStorage
+    if (currentSession && isRunning) {
+      localStorage.setItem("activeStudySession", JSON.stringify({
+        session: currentSession,
+        startTime: sessionStartTime,
+        timeLeft,
+        state,
+        mode
+      }));
+    } else {
+      localStorage.removeItem("activeStudySession");
+    }
+  }, [currentSession, isRunning, timeLeft, state, mode, sessionStartTime]);
+
+  const loadStudySessions = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("study_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("completed_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setStudySessions(data || []);
+    } catch (error) {
+      console.error("Error loading sessions:", error);
+    }
+  };
 
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
@@ -53,11 +135,37 @@ const TimerPage = () => {
     };
   }, [isRunning, timeLeft]);
 
-  const handleTimerComplete = () => {
+  const handleTimerComplete = async () => {
     setIsRunning(false);
     playNotificationSound();
 
-    if (state === "work") {
+    if (state === "work" && currentSession && sessionStartTime) {
+      // Calculate actual duration
+      const durationMinutes = Math.round(
+        (new Date().getTime() - sessionStartTime.getTime()) / 60000
+      );
+      
+      // Save session to database
+      await saveStudySession({
+        ...currentSession,
+        duration_minutes: durationMinutes,
+        timer_mode: mode,
+        started_at: sessionStartTime.toISOString(),
+        completed_at: new Date().toISOString()
+      });
+      
+      // Track activity points
+      const points = Math.round((durationMinutes / 60) * POINTS.STUDY_HOUR);
+      await trackActivity("study_session", points, {
+        subject: currentSession.subjectName,
+        topic: currentSession.topic,
+        duration_minutes: durationMinutes
+      });
+      
+      // Clear session
+      setCurrentSession(null);
+      setSessionStartTime(null);
+      
       const newSessions = sessionsCompleted + 1;
       setSessionsCompleted(newSessions);
       localStorage.setItem("timerStats", JSON.stringify({ sessionsCompleted: newSessions }));
@@ -67,12 +175,39 @@ const TimerPage = () => {
         ? TIMER_PRESETS[mode].longBreak 
         : TIMER_PRESETS[mode].break;
       setTimeLeft(breakTime * 60);
-      toast.success(`Sessão concluída! Hora do intervalo (${breakTime}min)`);
-    } else {
+      toast.success(`Sessão concluída! +${points} pontos • Hora do intervalo (${breakTime}min)`);
+      
+      // Reload sessions list
+      loadStudySessions();
+    } else if (state === "break") {
       setState("work");
       const workTime = mode === "custom" ? customWork : TIMER_PRESETS[mode].work;
       setTimeLeft(workTime * 60);
       toast.success("Intervalo finalizado! Hora de voltar aos estudos");
+    }
+  };
+
+  const saveStudySession = async (session: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase.from("study_sessions").insert({
+        user_id: user.id,
+        subject_id: session.subjectId,
+        subject_name: session.subjectName,
+        topic: session.topic,
+        duration_minutes: session.duration_minutes,
+        timer_mode: session.timer_mode,
+        started_at: session.started_at,
+        completed_at: session.completed_at,
+        notes: session.notes
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error saving session:", error);
+      toast.error("Erro ao salvar sessão de estudo");
     }
   };
 
@@ -108,11 +243,22 @@ const TimerPage = () => {
 
   const startTimer = () => {
     if (state === "idle") {
-      setState("work");
-      const workTime = mode === "custom" ? customWork : TIMER_PRESETS[mode].work;
-      setTimeLeft(workTime * 60);
+      // Open dialog to configure session
+      setShowSessionDialog(true);
+    } else {
+      setIsRunning(true);
     }
+  };
+
+  const handleSessionStart = (config: StudySessionConfig) => {
+    setCurrentSession(config);
+    setSessionStartTime(new Date());
+    setState("work");
+    const workTime = mode === "custom" ? customWork : TIMER_PRESETS[mode].work;
+    setTimeLeft(workTime * 60);
     setIsRunning(true);
+    
+    toast.success(`Sessão iniciada: ${config.subjectName} - ${config.topic}`);
   };
 
   const pauseTimer = () => {
@@ -122,6 +268,8 @@ const TimerPage = () => {
   const resetTimer = () => {
     setIsRunning(false);
     setState("idle");
+    setCurrentSession(null);
+    setSessionStartTime(null);
     const workTime = mode === "custom" ? customWork : TIMER_PRESETS[mode].work;
     setTimeLeft(workTime * 60);
   };
@@ -270,6 +418,23 @@ const TimerPage = () => {
             </TabsContent>
           </Tabs>
 
+          {currentSession && state === "work" && (
+            <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="flex items-center gap-2 mb-2">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-sm">{currentSession.subjectName}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                📚 {currentSession.topic}
+              </p>
+              {currentSession.notes && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  💭 {currentSession.notes}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="mt-8">
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted mb-4">
@@ -354,7 +519,65 @@ const TimerPage = () => {
             </ul>
           </div>
         </Card>
+
+        <Card className="p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Histórico Recente
+            </h2>
+          </div>
+
+          {studySessions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Nenhuma sessão registrada ainda</p>
+              <p className="text-sm mt-1">Complete sua primeira sessão de estudo!</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {studySessions.map((session) => (
+                <Card key={session.id} className="bg-muted/30">
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary">{session.subject_name}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {session.timer_mode}
+                          </Badge>
+                        </div>
+                        <p className="text-sm font-medium mb-1">{session.topic}</p>
+                        <p className="text-xs text-muted-foreground">
+                          ⏱️ {session.duration_minutes} minutos • 
+                          {format(new Date(session.completed_at), " dd/MM/yyyy 'às' HH:mm")}
+                        </p>
+                        {session.notes && (
+                          <p className="text-xs text-muted-foreground mt-2 italic">
+                            💭 {session.notes}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-primary">
+                          +{Math.round((session.duration_minutes / 60) * 20)} pts
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
+
+      <StudySessionDialog
+        open={showSessionDialog}
+        onOpenChange={setShowSessionDialog}
+        onStart={handleSessionStart}
+        timerMode={mode}
+      />
     </div>
   );
 };

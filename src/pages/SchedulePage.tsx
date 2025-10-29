@@ -52,6 +52,13 @@ interface ScheduleEvent {
   description?: string;
 }
 
+interface WeeklyProgress {
+  [subjectName: string]: {
+    totalMinutes: number;
+    topics: Set<string>;
+  };
+}
+
 const SchedulePage = () => {
   const [dbSubjects, setDbSubjects] = useState<DBSubject[]>([]);
   const [scheduleSubjects, setScheduleSubjects] = useState<ScheduleSubject[]>([]);
@@ -63,6 +70,7 @@ const SchedulePage = () => {
   const [studyPreferences, setStudyPreferences] = useState<string[]>(["videoaulas"]);
   const [schedule, setSchedule] = useState<ScheduleEvent[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress>({});
   const { toast } = useToast();
 
   const studyMethodOptions = [
@@ -87,7 +95,49 @@ const SchedulePage = () => {
     if (savedSchedule) {
       setSchedule(JSON.parse(savedSchedule));
     }
+    loadWeeklyProgress();
   }, []);
+
+  const loadWeeklyProgress = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get start and end of current week
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - dayOfWeek);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+      const { data: sessions, error } = await supabase
+        .from("study_sessions")
+        .select("subject_name, topic, duration_minutes")
+        .gte("completed_at", startOfWeek.toISOString())
+        .lte("completed_at", endOfWeek.toISOString());
+
+      if (error) throw error;
+
+      const progress: WeeklyProgress = {};
+      sessions?.forEach((session) => {
+        if (!progress[session.subject_name]) {
+          progress[session.subject_name] = {
+            totalMinutes: 0,
+            topics: new Set(),
+          };
+        }
+        progress[session.subject_name].totalMinutes += session.duration_minutes;
+        progress[session.subject_name].topics.add(session.topic);
+      });
+
+      setWeeklyProgress(progress);
+    } catch (error) {
+      console.error("Error loading weekly progress:", error);
+    }
+  };
 
   const loadDbSubjects = async () => {
     try {
@@ -598,6 +648,79 @@ Observações:
             </Card>
           ) : (
             <>
+              {scheduleSubjects.length > 0 && (
+                <Card className="mb-4">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Progresso Semanal
+                    </CardTitle>
+                    <CardDescription>
+                      Comparação: planejado vs realizado (semana atual)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {scheduleSubjects.map((subject) => {
+                        const planned = subject.weeklyHours * 60; // em minutos
+                        const actual = weeklyProgress[subject.name]?.totalMinutes || 0;
+                        const percentage = planned > 0 ? Math.round((actual / planned) * 100) : 0;
+                        const actualHours = (actual / 60).toFixed(1);
+                        
+                        return (
+                          <div key={subject.name}>
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{subject.name}</span>
+                                {weeklyProgress[subject.name]?.topics.size > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {weeklyProgress[subject.name].topics.size} assuntos
+                                  </Badge>
+                                )}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {actualHours}h / {subject.weeklyHours}h
+                                {percentage > 0 && (
+                                  <span className={cn(
+                                    "ml-2 font-semibold",
+                                    percentage >= 100 ? "text-success" : 
+                                    percentage >= 70 ? "text-warning" : 
+                                    "text-destructive"
+                                  )}>
+                                    ({percentage}%)
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                            <div className="relative">
+                              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className={cn(
+                                    "h-full transition-all",
+                                    percentage >= 100 ? "bg-success" : 
+                                    percentage >= 70 ? "bg-warning" : 
+                                    "bg-primary"
+                                  )}
+                                  style={{ width: `${Math.min(percentage, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {Object.keys(weeklyProgress).length === 0 && (
+                      <div className="text-center py-4 text-muted-foreground text-sm">
+                        <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>Nenhuma sessão de estudo registrada esta semana</p>
+                        <p className="text-xs mt-1">Use o Timer para começar a rastrear seu progresso!</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+              
               <div className="flex gap-2 justify-end mb-4">
                 <Button variant="outline" onClick={exportSchedule}>
                   <FileText className="mr-2 h-4 w-4" />
