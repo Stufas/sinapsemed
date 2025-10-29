@@ -112,18 +112,21 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          onboarding_completed: boolean | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id: string
+          onboarding_completed?: boolean | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          onboarding_completed?: boolean | null
         }
         Relationships: []
       }
@@ -226,18 +229,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_invite_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_invite_code: { Args: never; Returns: string }
       is_group_member_with: {
         Args: { check_user_id: string; target_user_id: string }
         Returns: boolean
       }
-      update_user_streak: {
-        Args: { p_user_id: string }
-        Returns: undefined
-      }
+      update_user_streak: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
