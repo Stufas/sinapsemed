@@ -8,12 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, CheckCircle2, XCircle, Plus, Trash2, Target, Loader2, ChevronRight } from "lucide-react";
+import { Brain, CheckCircle2, XCircle, Plus, Trash2, Target, Loader2, ChevronRight, BookOpen, TrendingUp, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Question {
   id: string;
@@ -30,6 +32,17 @@ interface Question {
   correct?: boolean;
   createdAt?: string;
   source?: 'manual' | 'ai';
+  usedInExam?: boolean;
+}
+
+interface ExamSession {
+  id: string;
+  title: string;
+  questions: Question[];
+  startTime: string;
+  endTime?: string;
+  score?: number;
+  answers: (number | null)[];
 }
 
 interface Subject {
@@ -70,6 +83,20 @@ const QuestionsPage = () => {
   const [specificTopic, setSpecificTopic] = useState("");
   const [questionCount, setQuestionCount] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Exam states
+  const [examMode, setExamMode] = useState(false);
+  const [currentExam, setCurrentExam] = useState<ExamSession | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [showResults, setShowResults] = useState(false);
+  const [examSessions, setExamSessions] = useState<ExamSession[]>(() => {
+    const saved = localStorage.getItem("examSessions");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [examQuestionCount, setExamQuestionCount] = useState(10);
+  const [examSubjects, setExamSubjects] = useState<string[]>([]);
+  const [onlyNewQuestions, setOnlyNewQuestions] = useState(false);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -176,6 +203,12 @@ const QuestionsPage = () => {
 
   const nextQuestion = () => {
     startPractice();
+  };
+
+  const nextExamQuestion = () => {
+    if (currentQuestionIndex < (currentExam?.questions.length || 0) - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
   };
 
   const resetStats = () => {
@@ -291,6 +324,9 @@ const QuestionsPage = () => {
   const answeredQuestions = questions.filter(q => q.answered).length;
   const correctAnswers = questions.filter(q => q.correct).length;
   const accuracy = answeredQuestions > 0 ? (correctAnswers / answeredQuestions) * 100 : 0;
+  const averageExamScore = examSessions.length > 0
+    ? Math.round(examSessions.reduce((sum, s) => sum + (s.score || 0), 0) / examSessions.length)
+    : 0;
 
   const getQuestionsBySubject = () => {
     const grouped: Record<string, {
@@ -368,11 +404,295 @@ const QuestionsPage = () => {
     });
   };
 
+  // Exam functions
+  const saveSessions = (sessions: ExamSession[]) => {
+    setExamSessions(sessions);
+    localStorage.setItem("examSessions", JSON.stringify(sessions));
+  };
+
+  const startExam = () => {
+    let availableQuestions = questions;
+    
+    if (examSubjects.length > 0) {
+      availableQuestions = availableQuestions.filter(q => 
+        examSubjects.includes(q.subject)
+      );
+    }
+    
+    if (onlyNewQuestions) {
+      availableQuestions = availableQuestions.filter(q => !q.answered);
+    }
+    
+    if (availableQuestions.length < examQuestionCount) {
+      toast({
+        title: "Questões insuficientes",
+        description: `Você tem apenas ${availableQuestions.length} questões disponíveis com esses filtros`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const selectedQuestions = availableQuestions
+      .sort(() => Math.random() - 0.5)
+      .slice(0, examQuestionCount);
+    
+    const exam: ExamSession = {
+      id: Date.now().toString(),
+      title: `Simulado ${new Date().toLocaleDateString("pt-BR")}`,
+      questions: selectedQuestions,
+      startTime: new Date().toISOString(),
+      answers: Array(selectedQuestions.length).fill(null),
+    };
+    
+    setCurrentExam(exam);
+    setCurrentQuestionIndex(0);
+    setExamMode(true);
+    setShowResults(false);
+  };
+
+  const answerQuestion = (answerIndex: number) => {
+    if (!currentExam) return;
+    
+    const updatedAnswers = [...currentExam.answers];
+    updatedAnswers[currentQuestionIndex] = answerIndex;
+    
+    setCurrentExam({
+      ...currentExam,
+      answers: updatedAnswers,
+    });
+  };
+
+  const previousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
+  const finishExam = () => {
+    if (!currentExam) return;
+    
+    const unanswered = currentExam.answers.filter(a => a === null).length;
+    if (unanswered > 0) {
+      const confirm = window.confirm(
+        `Você tem ${unanswered} questão(ões) não respondida(s). Deseja finalizar mesmo assim?`
+      );
+      if (!confirm) return;
+    }
+    
+    const correctAnswers = currentExam.questions.reduce((count, question, index) => {
+      return count + (currentExam.answers[index] === question.correctAnswer ? 1 : 0);
+    }, 0);
+    
+    const score = Math.round((correctAnswers / currentExam.questions.length) * 100);
+    
+    const finishedExam: ExamSession = {
+      ...currentExam,
+      endTime: new Date().toISOString(),
+      score,
+    };
+    
+    saveSessions([finishedExam, ...examSessions]);
+    
+    // Mark questions as answered and used in exam
+    const updatedQuestions = questions.map(q => {
+      const examQuestion = currentExam.questions.find(eq => eq.id === q.id);
+      if (examQuestion) {
+        const index = currentExam.questions.indexOf(examQuestion);
+        const userAnswer = currentExam.answers[index];
+        return {
+          ...q,
+          answered: true,
+          correct: userAnswer === q.correctAnswer,
+          usedInExam: true
+        };
+      }
+      return q;
+    });
+    
+    saveQuestions(updatedQuestions);
+    setCurrentExam(finishedExam);
+    setShowResults(true);
+    
+    toast({
+      title: `Simulado finalizado!`,
+      description: `Nota: ${score}% • ${correctAnswers}/${currentExam.questions.length} acertos`
+    });
+  };
+
+  const exitExam = () => {
+    setExamMode(false);
+    setCurrentExam(null);
+    setCurrentQuestionIndex(0);
+    setShowResults(false);
+  };
+
+  // Exam mode view
+  if (examMode && currentExam && !showResults) {
+    const currentQ = currentExam.questions[currentQuestionIndex];
+    const progress = ((currentQuestionIndex + 1) / currentExam.questions.length) * 100;
+    const selectedAnswer = currentExam.answers[currentQuestionIndex];
+
+    return (
+      <div className="container mx-auto max-w-4xl py-8 px-4">
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold">
+              Questão {currentQuestionIndex + 1} de {currentExam.questions.length}
+            </h2>
+            <Button variant="outline" size="sm" onClick={exitExam}>
+              Sair
+            </Button>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+
+        <Card className="p-8">
+          <div className="mb-6">
+            <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+              {currentQ.subject}
+            </span>
+            <p className="text-lg font-semibold leading-relaxed">
+              {currentQ.question}
+            </p>
+          </div>
+
+          <RadioGroup
+            value={selectedAnswer?.toString()}
+            onValueChange={(value) => answerQuestion(parseInt(value))}
+          >
+            <div className="space-y-3">
+              {currentQ.options.map((option, index) => (
+                <Label
+                  key={index}
+                  htmlFor={`option-${index}`}
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition-colors hover:bg-muted [&:has(:checked)]:border-primary"
+                >
+                  <RadioGroupItem value={index.toString()} id={`option-${index}`} className="mt-1" />
+                  <span className="flex-1">{option}</span>
+                </Label>
+              ))}
+            </div>
+          </RadioGroup>
+
+          <div className="flex gap-3 mt-8">
+            <Button
+              onClick={previousQuestion}
+              disabled={currentQuestionIndex === 0}
+              variant="outline"
+              className="flex-1"
+            >
+              Anterior
+            </Button>
+            {currentQuestionIndex === currentExam.questions.length - 1 ? (
+              <Button onClick={finishExam} className="flex-1">
+                Finalizar Simulado
+              </Button>
+            ) : (
+              <Button onClick={nextExamQuestion} className="flex-1">
+                Próxima
+              </Button>
+            )}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Results view
+  if (showResults && currentExam) {
+    return (
+      <div className="container mx-auto max-w-4xl py-8 px-4">
+        <Card className="p-8 mb-6">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">Simulado Finalizado!</h2>
+            <p className="text-muted-foreground">Confira seu desempenho</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="text-center p-4 rounded-lg bg-primary/10">
+              <p className="text-3xl font-bold text-primary">{currentExam.score}%</p>
+              <p className="text-sm text-muted-foreground">Nota Final</p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-green-500/10">
+              <p className="text-3xl font-bold text-green-600">
+                {currentExam.questions.filter((q, i) => currentExam.answers[i] === q.correctAnswer).length}
+              </p>
+              <p className="text-sm text-muted-foreground">Acertos</p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-destructive/10">
+              <p className="text-3xl font-bold text-destructive">
+                {currentExam.questions.filter((q, i) => currentExam.answers[i] !== q.correctAnswer && currentExam.answers[i] !== null).length}
+              </p>
+              <p className="text-sm text-muted-foreground">Erros</p>
+            </div>
+          </div>
+
+          <Button onClick={exitExam} className="w-full" size="lg">
+            Voltar ao Início
+          </Button>
+        </Card>
+
+        <h3 className="text-xl font-semibold mb-4">Gabarito</h3>
+        <div className="space-y-4">
+          {currentExam.questions.map((question, index) => {
+            const userAnswer = currentExam.answers[index];
+            const isCorrect = userAnswer === question.correctAnswer;
+
+            return (
+              <Card key={question.id} className="p-6">
+                <div className="flex items-start gap-4">
+                  {isCorrect ? (
+                    <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0 mt-1" />
+                  ) : (
+                    <XCircle className="h-6 w-6 text-destructive flex-shrink-0 mt-1" />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-semibold">Questão {index + 1}</span>
+                      <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
+                        {question.subject}
+                      </span>
+                    </div>
+                    <p className="mb-3">{question.question}</p>
+                    <div className="space-y-2 mb-2">
+                      {question.options.map((option, optIndex) => (
+                        <div
+                          key={optIndex}
+                          className={`p-2 rounded ${
+                            optIndex === question.correctAnswer
+                              ? "bg-green-500/10 border border-green-500"
+                              : optIndex === userAnswer && !isCorrect
+                              ? "bg-destructive/10 border border-destructive"
+                              : "bg-muted"
+                          }`}
+                        >
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                    {question.explanation && (
+                      <div className="mt-3 p-3 bg-muted rounded">
+                        <p className="text-sm">
+                          <span className="font-semibold">Explicação: </span>
+                          {question.explanation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Questões</h1>
-        <p className="text-muted-foreground">Pratique questões individuais por matéria</p>
+        <h1 className="text-3xl font-bold mb-2">Questões & Simulados</h1>
+        <p className="text-muted-foreground">Pratique questões individuais ou faça simulados completos</p>
       </div>
 
       {currentQuestion ? (
@@ -455,29 +775,41 @@ const QuestionsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardDescription>Total de Questões</CardDescription>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  <CardDescription>Total de Questões</CardDescription>
+                </div>
                 <CardTitle className="text-3xl">{totalQuestions}</CardTitle>
               </CardHeader>
             </Card>
 
             <Card>
               <CardHeader className="pb-3">
-                <CardDescription>Respondidas</CardDescription>
-                <CardTitle className="text-3xl">{answeredQuestions}</CardTitle>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription>Acertos</CardDescription>
-                <CardTitle className="text-3xl text-green-600">{correctAnswers}</CardTitle>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription>Aproveitamento</CardDescription>
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-secondary" />
+                  <CardDescription>Aproveitamento</CardDescription>
+                </div>
                 <CardTitle className="text-3xl">{accuracy.toFixed(0)}%</CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-accent" />
+                  <CardDescription>Simulados Completos</CardDescription>
+                </div>
+                <CardTitle className="text-3xl">{examSessions.length}</CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <CardDescription>Média em Simulados</CardDescription>
+                </div>
+                <CardTitle className="text-3xl">{averageExamScore}%</CardTitle>
               </CardHeader>
             </Card>
           </div>
@@ -523,11 +855,173 @@ const QuestionsPage = () => {
             </Card>
           )}
 
-          <Tabs defaultValue="create" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="create">Gerar Questão IA</TabsTrigger>
-              <TabsTrigger value="list">Minhas Questões ({totalQuestions})</TabsTrigger>
+          <Tabs defaultValue="practice" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="practice">Praticar</TabsTrigger>
+              <TabsTrigger value="exam">Simulado</TabsTrigger>
+              <TabsTrigger value="create">Gerar IA</TabsTrigger>
+              <TabsTrigger value="list">Minhas Questões</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="practice">
+              {totalQuestions > 0 ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Praticar Questões</CardTitle>
+                    <CardDescription>Selecione uma matéria ou pratique todas</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-2">
+                      <Select value={filterSubject} onValueChange={setFilterSubject}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas as Matérias</SelectItem>
+                          {questionSubjects.map(subject => (
+                            <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button onClick={startPractice}>
+                        <Target className="mr-2 h-4 w-4" />
+                        Começar
+                      </Button>
+                    </div>
+
+                    {answeredQuestions > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Progresso Individual</span>
+                          <span>{answeredQuestions}/{totalQuestions}</span>
+                        </div>
+                        <Progress value={(answeredQuestions / totalQuestions) * 100} />
+                        <Button variant="outline" size="sm" className="w-full" onClick={resetStats}>
+                          Resetar Estatísticas
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="p-12 text-center">
+                  <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-semibold mb-2">
+                    Nenhuma questão ainda
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Crie questões com IA para começar a praticar
+                  </p>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="exam">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Criar Simulado</CardTitle>
+                  <CardDescription>
+                    Monte um simulado personalizado com suas questões
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {totalQuestions === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Você precisa ter questões criadas para fazer um simulado.</p>
+                      <p className="text-sm">Vá para "Gerar IA" e crie suas primeiras questões.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Matérias (opcional)</Label>
+                        <Select 
+                          value={examSubjects.length === 1 ? examSubjects[0] : "all"}
+                          onValueChange={(value) => {
+                            if (value === "all") {
+                              setExamSubjects([]);
+                            } else {
+                              setExamSubjects([value]);
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Todas as matérias" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todas as matérias</SelectItem>
+                            {questionSubjects.map(subject => (
+                              <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Número de Questões</Label>
+                        <Select 
+                          value={examQuestionCount.toString()}
+                          onValueChange={(v) => setExamQuestionCount(parseInt(v))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5 questões</SelectItem>
+                            <SelectItem value="10">10 questões</SelectItem>
+                            <SelectItem value="15">15 questões</SelectItem>
+                            <SelectItem value="20">20 questões</SelectItem>
+                            <SelectItem value="30">30 questões</SelectItem>
+                            <SelectItem value="50">50 questões</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="only-new" 
+                          checked={onlyNewQuestions}
+                          onCheckedChange={(checked) => setOnlyNewQuestions(checked as boolean)}
+                        />
+                        <Label htmlFor="only-new" className="cursor-pointer">
+                          Apenas questões não respondidas
+                        </Label>
+                      </div>
+                      
+                      <Button onClick={startExam} className="w-full" size="lg">
+                        <BookOpen className="mr-2 h-5 w-5" />
+                        Iniciar Simulado
+                      </Button>
+                      
+                      {examSessions.length > 0 && (
+                        <div className="mt-8">
+                          <h3 className="font-semibold mb-4">Histórico de Simulados</h3>
+                          <div className="space-y-2">
+                            {examSessions.map(session => (
+                              <Card key={session.id}>
+                                <CardContent className="flex justify-between items-center pt-4">
+                                  <div>
+                                    <p className="font-medium">{session.title}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {new Date(session.startTime).toLocaleDateString("pt-BR")} • {session.questions.length} questões
+                                    </p>
+                                  </div>
+                                  <Badge variant={
+                                    (session.score || 0) >= 70 ? "default" : "destructive"
+                                  }>
+                                    {session.score}%
+                                  </Badge>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="create">
               <Card>
