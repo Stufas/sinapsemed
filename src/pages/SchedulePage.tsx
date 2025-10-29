@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { SubjectManager } from "@/components/SubjectManager";
 import { 
   Calendar as CalendarIcon, 
   Plus, 
@@ -30,7 +31,13 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-interface Subject {
+interface DBSubject {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
+interface ScheduleSubject {
   name: string;
   priority: "high" | "medium" | "low";
   weeklyHours: number;
@@ -46,7 +53,8 @@ interface ScheduleEvent {
 }
 
 const SchedulePage = () => {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [dbSubjects, setDbSubjects] = useState<DBSubject[]>([]);
+  const [scheduleSubjects, setScheduleSubjects] = useState<ScheduleSubject[]>([]);
   const [newSubject, setNewSubject] = useState({ name: "", priority: "medium" as const, weeklyHours: 2 });
   const [availableHours, setAvailableHours] = useState(4);
   const [studyDays, setStudyDays] = useState([1, 2, 3, 4, 5]); // Mon-Fri by default
@@ -74,49 +82,65 @@ const SchedulePage = () => {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem("studySubjects");
-    if (saved) {
-      setSubjects(JSON.parse(saved));
-    }
+    loadDbSubjects();
     const savedSchedule = localStorage.getItem("studySchedule");
     if (savedSchedule) {
       setSchedule(JSON.parse(savedSchedule));
     }
   }, []);
 
-  const saveSubjects = (updatedSubjects: Subject[]) => {
-    localStorage.setItem("studySubjects", JSON.stringify(updatedSubjects));
-    setSubjects(updatedSubjects);
+  const loadDbSubjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("subjects")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setDbSubjects(data || []);
+    } catch (error) {
+      console.error("Error loading subjects:", error);
+    }
   };
 
-  const addSubject = () => {
+  const addSubjectToSchedule = () => {
     if (!newSubject.name) {
       toast({
-        title: "Nome obrigatório",
-        description: "Digite o nome da matéria",
+        title: "Selecione uma matéria",
+        description: "Escolha uma matéria da lista",
         variant: "destructive"
       });
       return;
     }
 
-    saveSubjects([...subjects, newSubject]);
+    // Check if subject already added
+    if (scheduleSubjects.some(s => s.name === newSubject.name)) {
+      toast({
+        title: "Matéria já adicionada",
+        description: "Esta matéria já está no cronograma",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setScheduleSubjects([...scheduleSubjects, newSubject]);
     setNewSubject({ name: "", priority: "medium", weeklyHours: 2 });
     
     toast({
-      title: "Matéria adicionada!",
+      title: "Matéria adicionada ao cronograma!",
       description: "Configure todas as matérias e gere seu cronograma"
     });
   };
 
-  const removeSubject = (index: number) => {
-    saveSubjects(subjects.filter((_, i) => i !== index));
+  const removeSubjectFromSchedule = (index: number) => {
+    setScheduleSubjects(scheduleSubjects.filter((_, i) => i !== index));
   };
 
   const generateSchedule = async () => {
-    if (subjects.length === 0) {
+    if (scheduleSubjects.length === 0) {
       toast({
-        title: "Adicione matérias",
-        description: "Você precisa adicionar pelo menos uma matéria",
+        title: "Adicione matérias ao cronograma",
+        description: "Você precisa adicionar pelo menos uma matéria ao cronograma",
         variant: "destructive"
       });
       return;
@@ -133,7 +157,7 @@ const SchedulePage = () => {
       const prompt = `Você é um especialista em planejamento de estudos. Gere um cronograma de estudos semanal personalizado.
 
 Informações fornecidas:
-- Matérias: ${subjects.map(s => `${s.name} (prioridade: ${s.priority}, horas semanais desejadas: ${s.weeklyHours}h)`).join(", ")}
+- Matérias: ${scheduleSubjects.map(s => `${s.name} (prioridade: ${s.priority}, horas semanais desejadas: ${s.weeklyHours}h)`).join(", ")}
 - Horas disponíveis por dia: ${availableHours}h
 - Dias de estudo: ${studyDays.map(d => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d]).join(", ")}
 - Métodos de estudo preferidos: ${preferenceLabels.join(", ")}
@@ -345,18 +369,35 @@ Observações:
         <TabsContent value="config" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Matérias</CardTitle>
-              <CardDescription>Adicione as matérias que você precisa estudar</CardDescription>
+              <CardTitle>Gerenciar Matérias</CardTitle>
+              <CardDescription>Adicione ou edite suas matérias cadastradas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SubjectManager onSubjectsChange={loadDbSubjects} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Matérias do Cronograma</CardTitle>
+              <CardDescription>Selecione as matérias e configure o cronograma</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Nome da Matéria</Label>
-                  <Input
-                    placeholder="Ex: Anatomia"
+                  <Label>Selecione a Matéria</Label>
+                  <select
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={newSubject.name}
                     onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })}
-                  />
+                  >
+                    <option value="">Selecione...</option>
+                    {dbSubjects.map((subject) => (
+                      <option key={subject.id} value={subject.name}>
+                        {subject.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label>Prioridade</Label>
@@ -381,14 +422,14 @@ Observações:
                   />
                 </div>
               </div>
-              <Button onClick={addSubject} className="w-full">
+              <Button onClick={addSubjectToSchedule} className="w-full" disabled={!newSubject.name}>
                 <Plus className="mr-2 h-4 w-4" />
-                Adicionar Matéria
+                Adicionar ao Cronograma
               </Button>
 
-              {subjects.length > 0 && (
+              {scheduleSubjects.length > 0 && (
                 <div className="space-y-2">
-                  {subjects.map((subject, index) => (
+                  {scheduleSubjects.map((subject, index) => (
                     <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
                       <div className="flex items-center gap-3">
                         <BookOpen className="h-5 w-5 text-muted-foreground" />
@@ -406,7 +447,7 @@ Observações:
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => removeSubject(index)}
+                          onClick={() => removeSubjectFromSchedule(index)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -530,7 +571,7 @@ Observações:
             className="w-full"
             size="lg"
             onClick={generateSchedule}
-            disabled={generating || subjects.length === 0 || studyPreferences.length === 0}
+            disabled={generating || scheduleSubjects.length === 0 || studyPreferences.length === 0}
           >
             {generating ? (
               <>

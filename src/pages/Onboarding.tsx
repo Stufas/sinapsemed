@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 import { GraduationCap, Stethoscope, Briefcase, ArrowRight, X, Calendar as CalendarIcon, Target } from "lucide-react";
 import { toast } from "sonner";
+import { SubjectManager } from "@/components/SubjectManager";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Subject {
   id: string;
@@ -38,6 +40,8 @@ interface OnboardingData {
 
 const Onboarding = () => {
   const [step, setStep] = useState(1);
+  const [hasSubjects, setHasSubjects] = useState(false);
+  const [dbSubjects, setDbSubjects] = useState<Array<{id: string; name: string}>>([]);
   const [data, setData] = useState<OnboardingData>({
     profile: "",
     name: "",
@@ -60,8 +64,47 @@ const Onboarding = () => {
   
   const navigate = useNavigate();
 
+  useEffect(() => {
+    checkSubjects();
+    if (step === 4) {
+      loadDbSubjects();
+    }
+  }, [step]);
+
+  const checkSubjects = async () => {
+    try {
+      const { data: subjects, error } = await supabase
+        .from("subjects")
+        .select("id")
+        .limit(1);
+
+      if (error) throw error;
+      setHasSubjects((subjects?.length || 0) > 0);
+    } catch (error) {
+      console.error("Error checking subjects:", error);
+    }
+  };
+
+  const loadDbSubjects = async () => {
+    try {
+      const { data: subjects, error } = await supabase
+        .from("subjects")
+        .select("id, name")
+        .order("name");
+
+      if (error) throw error;
+      setDbSubjects(subjects || []);
+    } catch (error) {
+      console.error("Error loading subjects:", error);
+    }
+  };
+
   const updateData = (field: keyof OnboardingData, value: any) => {
     setData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubjectsChange = () => {
+    checkSubjects();
   };
 
   const addSubject = () => {
@@ -110,10 +153,26 @@ const Onboarding = () => {
   const canProceedStep2 = data.profile === "pre-med" 
     ? data.name.trim() && data.gender.trim() && data.course.trim()
     : data.name.trim() && data.gender.trim() && data.institution.trim() && data.course.trim();
-  const canProceedStep3 = data.subjects.length > 0;
+  const canProceedStep3 = hasSubjects;
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     console.log("Onboarding data:", data);
+    
+    // Update user profile in database
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ onboarding_completed: true })
+          .eq("id", user.id);
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+
     localStorage.setItem("userProfile", JSON.stringify(data));
     toast.success("Perfil criado com sucesso!");
     navigate("/dashboard");
@@ -320,53 +379,7 @@ const Onboarding = () => {
                 </p>
               </div>
 
-              <div className="space-y-3">
-                <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
-                  <Input 
-                    placeholder="Nome da matéria" 
-                    value={currentSubject}
-                    onChange={(e) => setCurrentSubject(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && addSubject()}
-                  />
-                  <Input 
-                    placeholder="Período (opcional)" 
-                    value={currentSubjectSemester}
-                    onChange={(e) => setCurrentSubjectSemester(e.target.value)}
-                    className="w-32"
-                  />
-                  <Button onClick={addSubject} type="button">
-                    Adicionar
-                  </Button>
-                </div>
-                
-                {data.subjects.length === 0 ? (
-                  <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-                    Adicione pelo menos uma matéria para continuar
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {data.subjects.map((subject) => (
-                      <div key={subject.id} className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                          <span className="font-medium">{subject.name}</span>
-                          {subject.semester && (
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              ({subject.semester})
-                            </span>
-                          )}
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => removeSubject(subject.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <SubjectManager onSubjectsChange={handleSubjectsChange} />
 
               <div className="flex gap-3">
                 <Button onClick={() => setStep(2)} variant="outline" className="flex-1">
@@ -376,7 +389,6 @@ const Onboarding = () => {
                   onClick={handleComplete} 
                   variant="outline"
                   className="flex-1"
-                  disabled={!canProceedStep3}
                 >
                   Adicionar Depois
                 </Button>
@@ -417,7 +429,7 @@ const Onboarding = () => {
                       onChange={(e) => setCurrentExamSubject(e.target.value)}
                     >
                       <option value="">Selecione a matéria</option>
-                      {data.subjects.map((subject) => (
+                      {dbSubjects.map((subject) => (
                         <option key={subject.id} value={subject.name}>
                           {subject.name}
                         </option>
