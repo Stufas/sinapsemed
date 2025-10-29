@@ -8,20 +8,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, CheckCircle2, XCircle, Plus, Trash2, Target, Loader2 } from "lucide-react";
+import { Brain, CheckCircle2, XCircle, Plus, Trash2, Target, Loader2, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Question {
   id: string;
   subject: string;
+  subjectId?: string;
+  topic?: string;
+  documentId?: string;
+  documentTitle?: string;
   question: string;
   options: string[];
   correctAnswer: number;
   explanation?: string;
   answered?: boolean;
   correct?: boolean;
+  createdAt?: string;
+  source?: 'manual' | 'ai';
 }
 
 interface Subject {
@@ -241,12 +249,18 @@ const QuestionsPage = () => {
       const newQuestions = data.questions.map((q: any) => ({
         id: Date.now().toString() + Math.random(),
         subject: subjects.find(s => s.id === selectedSubject)?.name || "",
+        subjectId: selectedSubject,
+        topic: specificTopic || doc.title,
+        documentId: selectedDocument,
+        documentTitle: doc.title,
         question: q.question,
         options: q.options,
         correctAnswer: q.correctAnswer,
         explanation: q.explanation,
         answered: false,
-        correct: undefined
+        correct: undefined,
+        createdAt: new Date().toISOString(),
+        source: 'ai' as const
       }));
 
       saveQuestions([...questions, ...newQuestions]);
@@ -278,6 +292,82 @@ const QuestionsPage = () => {
   const correctAnswers = questions.filter(q => q.correct).length;
   const accuracy = answeredQuestions > 0 ? (correctAnswers / answeredQuestions) * 100 : 0;
 
+  const getQuestionsBySubject = () => {
+    const grouped: Record<string, {
+      subjectId: string;
+      subjectName: string;
+      topics: Record<string, Question[]>;
+      stats: {
+        total: number;
+        answered: number;
+        correct: number;
+      };
+    }> = {};
+
+    questions.forEach(q => {
+      const subjectKey = q.subjectId || q.subject;
+      
+      if (!grouped[subjectKey]) {
+        grouped[subjectKey] = {
+          subjectId: q.subjectId || '',
+          subjectName: q.subject,
+          topics: {},
+          stats: { total: 0, answered: 0, correct: 0 }
+        };
+      }
+
+      const topicKey = q.topic || 'Sem assunto definido';
+      if (!grouped[subjectKey].topics[topicKey]) {
+        grouped[subjectKey].topics[topicKey] = [];
+      }
+
+      grouped[subjectKey].topics[topicKey].push(q);
+      grouped[subjectKey].stats.total++;
+      if (q.answered) grouped[subjectKey].stats.answered++;
+      if (q.correct) grouped[subjectKey].stats.correct++;
+    });
+
+    return grouped;
+  };
+
+  const getTopicStats = (questionsInTopic: Question[]) => {
+    const total = questionsInTopic.length;
+    const answered = questionsInTopic.filter(q => q.answered).length;
+    const correct = questionsInTopic.filter(q => q.correct).length;
+    const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+    
+    return { total, answered, correct, accuracy };
+  };
+
+  const generateMoreFromTopic = async (
+    subjectId: string,
+    documentId: string | undefined,
+    topicName: string
+  ) => {
+    if (!documentId) {
+      toast({
+        title: "Documento não encontrado",
+        description: "Não é possível gerar mais questões sem o documento original",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSelectedSubject(subjectId);
+    setSelectedDocument(documentId);
+    setSpecificTopic(topicName === 'Sem assunto definido' ? '' : topicName);
+    setQuestionCount(5);
+    
+    setTimeout(() => {
+      generateQuestionsWithAI();
+    }, 100);
+    
+    toast({
+      title: "Gerando mais questões...",
+      description: `Sobre: ${topicName}`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -289,7 +379,14 @@ const QuestionsPage = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <Badge variant="secondary">{currentQuestion.subject}</Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">{currentQuestion.subject}</Badge>
+                {currentQuestion.topic && (
+                  <Badge variant="outline" className="text-xs">
+                    {currentQuestion.topic}
+                  </Badge>
+                )}
+              </div>
               <Button variant="ghost" size="sm" onClick={() => setCurrentQuestion(null)}>
                 Sair
               </Button>
@@ -535,8 +632,8 @@ const QuestionsPage = () => {
             <TabsContent value="list">
               <Card>
                 <CardHeader>
-                  <CardTitle>Banco de Questões</CardTitle>
-                  <CardDescription>Gerencie suas questões criadas</CardDescription>
+                  <CardTitle>Minhas Questões ({totalQuestions})</CardTitle>
+                  <CardDescription>Organizadas por matéria e assunto</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {questions.length === 0 ? (
@@ -546,37 +643,128 @@ const QuestionsPage = () => {
                       <p className="text-sm">Crie sua primeira questão na aba "Gerar Questão IA"</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      {questions.map((question) => (
-                        <Card key={question.id}>
-                          <CardContent className="pt-4">
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge variant="secondary">{question.subject}</Badge>
-                                  {question.answered && (
-                                    <Badge variant={question.correct ? "default" : "destructive"}>
-                                      {question.correct ? "Acertou" : "Errou"}
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm font-medium mb-2">{question.question}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Resposta: {String.fromCharCode(65 + question.correctAnswer)}) {question.options[question.correctAnswer]}
-                                </p>
+                    <Accordion type="multiple" className="w-full">
+                      {Object.entries(getQuestionsBySubject()).map(([subjectKey, subjectData]) => (
+                        <AccordionItem key={subjectKey} value={subjectKey}>
+                          <AccordionTrigger className="hover:no-underline">
+                            <div className="flex items-center justify-between w-full pr-4">
+                              <div className="flex items-center gap-3">
+                                <Badge variant="outline" className="font-semibold">
+                                  {subjectData.subjectName}
+                                </Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  {subjectData.stats.total} questões
+                                </span>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => deleteQuestion(question.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex gap-2 text-xs">
+                                <Badge variant="secondary">
+                                  {subjectData.stats.answered}/{subjectData.stats.total} respondidas
+                                </Badge>
+                                {subjectData.stats.answered > 0 && (
+                                  <Badge variant="default">
+                                    {Math.round((subjectData.stats.correct / subjectData.stats.answered) * 100)}% acerto
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
-                          </CardContent>
-                        </Card>
+                          </AccordionTrigger>
+                          
+                          <AccordionContent>
+                            <div className="space-y-4 pt-2">
+                              {Object.entries(subjectData.topics).map(([topicName, topicQuestions]) => {
+                                const stats = getTopicStats(topicQuestions);
+                                
+                                return (
+                                  <Card key={topicName} className="border-l-4 border-l-primary/50">
+                                    <CardHeader className="pb-3">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                          <CardTitle className="text-base">{topicName}</CardTitle>
+                                          <CardDescription className="text-xs mt-1">
+                                            {topicQuestions[0]?.documentTitle && (
+                                              <span>📄 {topicQuestions[0].documentTitle} • </span>
+                                            )}
+                                            {stats.total} questões • {stats.answered} respondidas
+                                            {stats.answered > 0 && ` • ${stats.accuracy}% de acerto`}
+                                          </CardDescription>
+                                        </div>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => generateMoreFromTopic(
+                                            subjectData.subjectId,
+                                            topicQuestions[0]?.documentId,
+                                            topicName
+                                          )}
+                                          disabled={!topicQuestions[0]?.documentId || isGenerating}
+                                        >
+                                          <Plus className="h-3 w-3 mr-1" />
+                                          Gerar mais
+                                        </Button>
+                                      </div>
+                                      
+                                      {stats.answered > 0 && (
+                                        <div className="mt-2">
+                                          <Progress value={(stats.answered / stats.total) * 100} className="h-1" />
+                                        </div>
+                                      )}
+                                    </CardHeader>
+                                    
+                                    <CardContent className="space-y-2">
+                                      <Collapsible>
+                                        <CollapsibleTrigger className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                                          <ChevronRight className="h-3 w-3" />
+                                          Ver {stats.total} questões
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent className="space-y-2 mt-2">
+                                          {topicQuestions.map((question) => (
+                                            <Card key={question.id} className="bg-muted/30">
+                                              <CardContent className="pt-3 pb-3">
+                                                <div className="flex justify-between items-start gap-4">
+                                                  <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                      {question.answered && (
+                                                        <Badge 
+                                                          variant={question.correct ? "default" : "destructive"}
+                                                          className="text-xs"
+                                                        >
+                                                          {question.correct ? "✓ Acertou" : "✗ Errou"}
+                                                        </Badge>
+                                                      )}
+                                                      {question.source === 'ai' && (
+                                                        <Badge variant="outline" className="text-xs">
+                                                          <Brain className="h-3 w-3 mr-1" />
+                                                          IA
+                                                        </Badge>
+                                                      )}
+                                                    </div>
+                                                    <p className="text-sm font-medium mb-2">{question.question}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                      Resposta: {String.fromCharCode(65 + question.correctAnswer)}) {question.options[question.correctAnswer]}
+                                                    </p>
+                                                  </div>
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => deleteQuestion(question.id)}
+                                                  >
+                                                    <Trash2 className="h-4 w-4" />
+                                                  </Button>
+                                                </div>
+                                              </CardContent>
+                                            </Card>
+                                          ))}
+                                        </CollapsibleContent>
+                                      </Collapsible>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
                       ))}
-                    </div>
+                    </Accordion>
                   )}
                 </CardContent>
               </Card>
