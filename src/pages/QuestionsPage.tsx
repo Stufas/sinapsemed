@@ -8,8 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, CheckCircle2, XCircle, Plus, Trash2, Target } from "lucide-react";
+import { Brain, CheckCircle2, XCircle, Plus, Trash2, Target, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 interface Question {
   id: string;
@@ -20,6 +22,24 @@ interface Question {
   explanation?: string;
   answered?: boolean;
   correct?: boolean;
+}
+
+interface Subject {
+  id: string;
+  name: string;
+  color: string | null;
+  user_id: string;
+  created_at: string;
+}
+
+interface Document {
+  id: string;
+  title: string;
+  file_path: string;
+  file_size: number;
+  uploaded_at: string;
+  content_text: string | null;
+  user_id: string;
 }
 
 const QuestionsPage = () => {
@@ -35,6 +55,13 @@ const QuestionsPage = () => {
     correctAnswer: 0,
     explanation: ""
   });
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedDocument, setSelectedDocument] = useState("");
+  const [specificTopic, setSpecificTopic] = useState("");
+  const [questionCount, setQuestionCount] = useState(5);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,7 +69,19 @@ const QuestionsPage = () => {
     if (saved) {
       setQuestions(JSON.parse(saved));
     }
+    loadSubjects();
+    loadDocuments();
   }, []);
+
+  const loadSubjects = async () => {
+    const { data } = await supabase.from('subjects').select('*').order('name');
+    if (data) setSubjects(data);
+  };
+
+  const loadDocuments = async () => {
+    const { data } = await supabase.from('documents').select('*').order('uploaded_at', { ascending: false });
+    if (data) setDocuments(data);
+  };
 
   const saveQuestions = (updatedQuestions: Question[]) => {
     localStorage.setItem("questions", JSON.stringify(updatedQuestions));
@@ -141,7 +180,99 @@ const QuestionsPage = () => {
     });
   };
 
-  const subjects = Array.from(new Set(questions.map(q => q.subject)));
+  const extractTextFromPDF = async (filePath: string): Promise<string> => {
+    try {
+      const { data, error } = await supabase.storage.from('documents').download(filePath);
+      if (error) throw error;
+
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const text = reader.result as string;
+          resolve(text.substring(0, 15000));
+        };
+        reader.onerror = reject;
+        reader.readAsText(data);
+      });
+    } catch (error) {
+      console.error("Error extracting PDF text:", error);
+      throw error;
+    }
+  };
+
+  const generateQuestionsWithAI = async () => {
+    if (!selectedDocument || !selectedSubject) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Selecione uma matéria e um documento",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const doc = documents.find(d => d.id === selectedDocument);
+      if (!doc) throw new Error("Documento não encontrado");
+
+      let documentText = doc.content_text;
+      if (!documentText) {
+        toast({
+          title: "Extraindo texto...",
+          description: "Processando PDF"
+        });
+        documentText = await extractTextFromPDF(doc.file_path);
+      }
+
+      const prompt = specificTopic 
+        ? `${documentText}\n\nFOCO ESPECÍFICO: Gere questões focadas em: ${specificTopic}`
+        : documentText;
+
+      const { data, error } = await supabase.functions.invoke('generate-questions', {
+        body: {
+          documentText: prompt,
+          subject: subjects.find(s => s.id === selectedSubject)?.name || "",
+          count: questionCount
+        }
+      });
+
+      if (error) throw error;
+
+      const newQuestions = data.questions.map((q: any) => ({
+        id: Date.now().toString() + Math.random(),
+        subject: subjects.find(s => s.id === selectedSubject)?.name || "",
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        answered: false,
+        correct: undefined
+      }));
+
+      saveQuestions([...questions, ...newQuestions]);
+      
+      setSelectedSubject("");
+      setSelectedDocument("");
+      setSpecificTopic("");
+      setQuestionCount(5);
+
+      toast({
+        title: "Sucesso!",
+        description: `${newQuestions.length} questões geradas com IA`
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar questões",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const questionSubjects = Array.from(new Set(questions.map(q => q.subject)));
   const totalQuestions = questions.length;
   const answeredQuestions = questions.filter(q => q.answered).length;
   const correctAnswers = questions.filter(q => q.correct).length;
@@ -268,7 +399,7 @@ const QuestionsPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as Matérias</SelectItem>
-                      {subjects.map(subject => (
+                      {questionSubjects.map(subject => (
                         <SelectItem key={subject} value={subject}>{subject}</SelectItem>
                       ))}
                     </SelectContent>
@@ -304,76 +435,98 @@ const QuestionsPage = () => {
             <TabsContent value="create">
               <Card>
                 <CardHeader>
-                  <CardTitle>Nova Questão</CardTitle>
-                  <CardDescription>Adicione questões para praticar</CardDescription>
+                  <CardTitle>Gerar Questões com IA</CardTitle>
+                  <CardDescription>Selecione um documento e deixe a IA criar questões para você</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Matéria</Label>
-                    <Input
-                      placeholder="Ex: Anatomia, Fisiologia..."
-                      value={newQuestion.subject}
-                      onChange={(e) => setNewQuestion({ ...newQuestion, subject: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Questão</Label>
-                    <Textarea
-                      placeholder="Digite a questão..."
-                      value={newQuestion.question}
-                      onChange={(e) => setNewQuestion({ ...newQuestion, question: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Alternativas</Label>
-                    {newQuestion.options.map((option, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          placeholder={`Alternativa ${String.fromCharCode(65 + index)}`}
-                          value={option}
-                          onChange={(e) => {
-                            const newOptions = [...newQuestion.options];
-                            newOptions[index] = e.target.value;
-                            setNewQuestion({ ...newQuestion, options: newOptions });
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Resposta Correta</Label>
-                    <Select 
-                      value={newQuestion.correctAnswer.toString()} 
-                      onValueChange={(value) => setNewQuestion({ ...newQuestion, correctAnswer: parseInt(value) })}
-                    >
+                    <Label>Matéria *</Label>
+                    <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione a matéria" />
                       </SelectTrigger>
                       <SelectContent>
-                        {newQuestion.options.map((_, index) => (
-                          <SelectItem key={index} value={index.toString()}>
-                            Alternativa {String.fromCharCode(65 + index)}
-                          </SelectItem>
+                        {subjects.map(subject => (
+                          <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Explicação (opcional)</Label>
-                    <Textarea
-                      placeholder="Explique por que esta é a resposta correta..."
-                      value={newQuestion.explanation}
-                      onChange={(e) => setNewQuestion({ ...newQuestion, explanation: e.target.value })}
-                    />
+                    <Label>Documento PDF *</Label>
+                    <Select value={selectedDocument} onValueChange={setSelectedDocument}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o PDF" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {documents.length === 0 ? (
+                          <div className="p-2 text-sm text-muted-foreground">
+                            Nenhum documento enviado ainda
+                          </div>
+                        ) : (
+                          documents.map(doc => (
+                            <SelectItem key={doc.id} value={doc.id}>
+                              {doc.title}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {documents.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Envie PDFs na página de <Link to="/content" className="underline">Conteúdo</Link>
+                      </p>
+                    )}
                   </div>
 
-                  <Button className="w-full" onClick={addQuestion}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar Questão
+                  <div className="space-y-2">
+                    <Label>Assunto Específico (opcional)</Label>
+                    <Input
+                      placeholder="Ex: Sistema Cardiovascular, Anatomia do Coração..."
+                      value={specificTopic}
+                      onChange={(e) => setSpecificTopic(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Especifique um tema para focar as questões
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Quantidade de Questões</Label>
+                    <Select 
+                      value={questionCount.toString()} 
+                      onValueChange={(v) => setQuestionCount(parseInt(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3">3 questões</SelectItem>
+                        <SelectItem value="5">5 questões</SelectItem>
+                        <SelectItem value="10">10 questões</SelectItem>
+                        <SelectItem value="15">15 questões</SelectItem>
+                        <SelectItem value="20">20 questões</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button 
+                    className="w-full" 
+                    onClick={generateQuestionsWithAI}
+                    disabled={isGenerating || !selectedSubject || !selectedDocument}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Gerando questões...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="mr-2 h-4 w-4" />
+                        Gerar Questões com IA
+                      </>
+                    )}
                   </Button>
                 </CardContent>
               </Card>
