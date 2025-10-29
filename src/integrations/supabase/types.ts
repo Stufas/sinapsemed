@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          event_time: string
+          event_type: string
+          id: string
+          subject_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date: string
+          event_time: string
+          event_type: string
+          id?: string
+          subject_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_time?: string
+          event_type?: string
+          id?: string
+          subject_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           content_text: string | null
@@ -127,6 +174,30 @@ export type Database = {
           display_name?: string | null
           id?: string
           onboarding_completed?: boolean | null
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
         }
         Relationships: []
       }

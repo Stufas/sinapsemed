@@ -1,28 +1,59 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { NewEventDialog } from "@/components/NewEventDialog";
+import { useToast } from "@/hooks/use-toast";
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  event_type: string;
+  event_date: string;
+  event_time: string;
+  subject_id: string | null;
+}
 
 const CalendarPage = () => {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 13)); // Oct 13, 2025
-  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(2025, 9, 13), { weekStartsOn: 0 }));
-  const [selectedDay, setSelectedDay] = useState(new Date(2025, 9, 13));
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 0 }));
+  const [selectedDay, setSelectedDay] = useState(new Date());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   const monthName = currentDate.toLocaleString("pt-BR", { month: "long", year: "numeric" });
 
-  // Mock events for demonstration
-  const events = [
-    { date: new Date(2025, 9, 25), type: "exam", title: "Prova de Anatomia I", time: "14:00" },
-    { date: new Date(2025, 9, 20), type: "assignment", title: "Trabalho de Fisiologia", time: "23:59" },
-    { date: new Date(2025, 9, 15), type: "class", title: "Aula de Bioquímica", time: "10:00" },
-    { date: new Date(2025, 9, 13), type: "study", title: "Revisão - Sistema Cardiovascular", time: "18:00" },
-    { date: new Date(2025, 9, 13), type: "class", title: "Aula de Histologia", time: "08:00" },
-    { date: new Date(2025, 9, 14), type: "study", title: "Estudo de Farmacologia", time: "16:00" },
-    { date: new Date(2025, 9, 16), type: "class", title: "Seminário de Patologia", time: "10:30" },
-  ];
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("calendar_events")
+        .select("*")
+        .order("event_date", { ascending: true })
+        .order("event_time", { ascending: true });
+
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (error) {
+      console.error("Error loading events:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os eventos",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getDaysInMonth = () => {
     const year = currentDate.getFullYear();
@@ -57,12 +88,12 @@ const CalendarPage = () => {
   };
 
   const getEventsForDate = (date: Date) => {
-    return events.filter(event => isSameDay(event.date, date));
+    return events.filter(event => isSameDay(parseISO(event.event_date), date));
   };
 
   const getEventForDateTime = (date: Date, time: string) => {
     return events.find(event => 
-      isSameDay(event.date, date) && event.time.startsWith(time.split(':')[0])
+      isSameDay(parseISO(event.event_date), date) && event.event_time.startsWith(time.split(':')[0])
     );
   };
 
@@ -73,6 +104,8 @@ const CalendarPage = () => {
       class: "bg-calendar-class",
       study: "bg-calendar-study",
       personal: "bg-calendar-personal",
+      seminar: "bg-calendar-seminar",
+      activity_submission: "bg-calendar-assignment",
     };
     return colors[type as keyof typeof colors] || "bg-muted";
   };
@@ -86,10 +119,7 @@ const CalendarPage = () => {
             Visualize e gerencie todas as suas atividades acadêmicas
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Evento
-        </Button>
+        <NewEventDialog onEventCreated={loadEvents} />
       </div>
 
       <Tabs defaultValue="month" className="space-y-4">
@@ -139,7 +169,8 @@ const CalendarPage = () => {
               {getDaysInMonth().map((day, index) => {
                 const currentDayDate = day ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day) : null;
                 const dayEvents = currentDayDate ? getEventsForDate(currentDayDate) : [];
-                const isToday = day === 13 && currentDate.getMonth() === 9;
+                const today = new Date();
+                const isToday = currentDayDate ? isSameDay(currentDayDate, today) : false;
                 
                 return (
                   <div
@@ -154,10 +185,10 @@ const CalendarPage = () => {
                           {day}
                         </div>
                         <div className="space-y-1">
-                          {dayEvents.map((event, i) => (
+                          {dayEvents.map((event) => (
                             <div
-                              key={i}
-                              className={`rounded px-2 py-1 text-xs text-white ${getEventColor(event.type)}`}
+                              key={event.id}
+                              className={`rounded px-2 py-1 text-xs text-white ${getEventColor(event.event_type)}`}
                             >
                               {event.title}
                             </div>
@@ -180,7 +211,7 @@ const CalendarPage = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded bg-calendar-assignment" />
-                <span className="text-sm">Trabalho</span>
+                <span className="text-sm">Trabalho/Entrega</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded bg-calendar-class" />
@@ -188,7 +219,11 @@ const CalendarPage = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded bg-calendar-study" />
-                <span className="text-sm">Estudo</span>
+                <span className="text-sm">Estudo/Revisão</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-calendar-seminar" />
+                <span className="text-sm">Seminário</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded bg-calendar-personal" />
@@ -214,7 +249,7 @@ const CalendarPage = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setWeekStart(startOfWeek(new Date(2025, 9, 13), { weekStartsOn: 0 }))}
+                  onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }))}
                 >
                   Esta Semana
                 </Button>
@@ -232,7 +267,7 @@ const CalendarPage = () => {
             <div className="grid grid-cols-7 gap-2">
               {getWeekDays().map((day, index) => {
                 const dayEvents = getEventsForDate(day);
-                const isToday = isSameDay(day, new Date(2025, 9, 13));
+                const isToday = isSameDay(day, new Date());
                 
                 return (
                   <div key={index} className="space-y-2">
@@ -246,15 +281,15 @@ const CalendarPage = () => {
                     </div>
                     <div className="space-y-2 min-h-[300px]">
                       {dayEvents.length > 0 ? (
-                        dayEvents.map((event, i) => (
+                        dayEvents.map((event) => (
                           <div
-                            key={i}
-                            className={`rounded-lg p-3 text-white ${getEventColor(event.type)} cursor-pointer hover:opacity-90 transition-opacity`}
+                            key={event.id}
+                            className={`rounded-lg p-3 text-white ${getEventColor(event.event_type)} cursor-pointer hover:opacity-90 transition-opacity`}
                           >
                             <div className="flex items-start gap-2">
                               <Clock className="h-3 w-3 mt-0.5 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium mb-1">{event.time}</div>
+                                <div className="text-xs font-medium mb-1">{event.event_time}</div>
                                 <div className="text-sm font-semibold line-clamp-2">{event.title}</div>
                               </div>
                             </div>
@@ -289,7 +324,7 @@ const CalendarPage = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedDay(new Date(2025, 9, 13))}
+                  onClick={() => setSelectedDay(new Date())}
                 >
                   Hoje
                 </Button>
@@ -318,13 +353,13 @@ const CalendarPage = () => {
                     </div>
                     <div className="flex-1 p-3 min-h-[60px]">
                       {event ? (
-                        <div className={`rounded-lg p-3 h-full ${getEventColor(event.type)} text-white cursor-pointer hover:opacity-90 transition-opacity`}>
+                        <div className={`rounded-lg p-3 h-full ${getEventColor(event.event_type)} text-white cursor-pointer hover:opacity-90 transition-opacity`}>
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <div className="font-semibold mb-1">{event.title}</div>
                               <div className="text-xs opacity-90 flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {event.time}
+                                {event.event_time}
                               </div>
                             </div>
                             <Button 
@@ -356,26 +391,34 @@ const CalendarPage = () => {
           <Card className="p-6 shadow-card">
             <h3 className="mb-4 text-lg font-semibold">Próximas Atividades</h3>
             <div className="space-y-4">
-              {events
-                .sort((a, b) => a.date.getTime() - b.date.getTime())
-                .map((event, i) => (
-                  <div key={i} className="flex items-start gap-4 rounded-lg border p-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{format(event.date, "d")}</div>
-                      <div className="text-xs text-muted-foreground uppercase">{format(event.date, "MMM", { locale: ptBR })}</div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="mb-1 flex items-center gap-2">
-                        <div className={`h-3 w-3 rounded-full ${getEventColor(event.type)}`} />
-                        <p className="font-semibold">{event.title}</p>
+              {loading ? (
+                <div className="text-center text-muted-foreground py-8">Carregando eventos...</div>
+              ) : events.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  Nenhum evento cadastrado. Clique em "Novo Evento" para começar!
+                </div>
+              ) : (
+                events
+                  .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+                  .map((event) => (
+                    <div key={event.id} className="flex items-start gap-4 rounded-lg border p-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">{format(parseISO(event.event_date), "d")}</div>
+                        <div className="text-xs text-muted-foreground uppercase">{format(parseISO(event.event_date), "MMM", { locale: ptBR })}</div>
                       </div>
-                      <p className="text-sm text-muted-foreground">{event.time}</p>
+                      <div className="flex-1">
+                        <div className="mb-1 flex items-center gap-2">
+                          <div className={`h-3 w-3 rounded-full ${getEventColor(event.event_type)}`} />
+                          <p className="font-semibold">{event.title}</p>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{event.event_time}</p>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        Detalhes
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Detalhes
-                    </Button>
-                  </div>
-                ))}
+                  ))
+              )}
             </div>
           </Card>
         </TabsContent>

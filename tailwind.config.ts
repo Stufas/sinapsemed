@@ -70,6 +70,7 @@ export default {
           assignment: "hsl(var(--calendar-assignment))",
           class: "hsl(var(--calendar-class))",
           study: "hsl(var(--calendar-study))",
+          seminar: "hsl(var(--calendar-seminar))",
           personal: "hsl(var(--calendar-personal))",
         },
       },
