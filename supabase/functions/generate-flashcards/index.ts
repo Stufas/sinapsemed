@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -67,7 +68,27 @@ serve(async (req) => {
       });
     }
 
-    const { documentText, subject, count = 10 } = await req.json();
+    const body = await req.json();
+    
+    // Validate input with Zod
+    const inputSchema = z.object({
+      documentText: z.string().min(1, "Document text is required").max(10240, "Document text too large (max 10KB)"),
+      subject: z.string().min(1, "Subject is required").max(100, "Subject too long (max 100 chars)"),
+      count: z.number().int().min(1, "Count must be at least 1").max(50, "Count cannot exceed 50").default(10),
+    });
+
+    const validationResult = inputSchema.safeParse(body);
+    if (!validationResult.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: validationResult.error.errors }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const { documentText, subject, count } = validationResult.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
